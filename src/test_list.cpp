@@ -1,30 +1,16 @@
+#include <iostream>
+#include <iterator>
+#include <typeinfo>
 #include <vector>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <pybind11_generics/list.h>
+
 namespace py = pybind11;
 
-namespace pybind11_generic {
-
-using list_base = py::list;
-template <typename T> class List : public py::list {
-public:
-  using list_base::list_base;
-};
-
-}; // namespace pybind11_generic
-
 namespace pyg = pybind11_generic;
-
-namespace pybind11 {
-namespace detail {
-template <typename T> struct handle_type_name<pyg::List<T>> {
-  static PYBIND11_DESCR name() { return _("List[") + _<T>() + _("]"); }
-};
-
-} // namespace detail
-} // namespace pybind11
 
 class test_list {
 private:
@@ -32,9 +18,8 @@ private:
 
 public:
   explicit test_list(pyg::List<int> val) {
-    for (const auto &obj : val) {
-      data_.push_back(obj.cast<int>());
-    }
+    data_.reserve(val.size());
+    data_.insert(data_.end(), val.begin(), val.end());
   }
 
   std::vector<int> get_data() { return data_; }
