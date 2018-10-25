@@ -1,12 +1,16 @@
 # General files
 *.log
 *~
+.idea
 
 # emacs related files
 TAGS
 
 # C++ related files
 *.so
+
+# Python related files
+__pycache__
 
 # CMake related files
 _build
