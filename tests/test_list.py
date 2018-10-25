@@ -16,6 +16,7 @@ def test_constructor(data):
     """Check object is constructed properly."""
     obj = test.TestList(data)
     assert obj.get_data() == data
+    assert obj.get_py_data() == data
 
 
 def test_error():
