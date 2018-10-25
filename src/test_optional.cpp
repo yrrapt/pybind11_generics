@@ -3,6 +3,7 @@
 #include <pybind11/stl.h>
 
 #include <pybind11_generics/list.h>
+#include <pybind11_generics/optional.h>
 
 #include "test_optional.h"
 
@@ -10,7 +11,7 @@ namespace pyg = pybind11_generics;
 
 class test_optional {
 public:
-  using value_type = std::optional<pyg::List<int>>;
+  using value_type = pyg::Optional<pyg::List<int>>;
 
 private:
   value_type data_;
@@ -23,6 +24,6 @@ public:
 
 void bind_test_optional(py::module &m) {
   py::class_<test_optional>(m, "TestOptional")
-      .def(py::init<std::optional<pyg::List<int>>>(), "initializer.")
+      .def(py::init<pyg::Optional<pyg::List<int>>>(), "initializer.")
       .def("get_data", &test_optional::get_data, "get data.");
 }

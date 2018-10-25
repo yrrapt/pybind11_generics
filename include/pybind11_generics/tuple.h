@@ -15,6 +15,9 @@ using tuple_base = py::tuple;
 
 template <typename... T> class Tuple : public tuple_base {
 public:
+  // inherit check_ so we can check if a python object matches this generic
+  using tuple_base::check_;
+
   template <class... Args>
   Tuple(Args &&... args) : tuple_base(std::forward<Args>(args)...) {
     if (size() != sizeof...(T))

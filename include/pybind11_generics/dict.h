@@ -40,8 +40,10 @@ public:
   using base_iter_type = py::detail::dict_iterator;
   using const_iterator = dict_cast_input_iterator<K, V, base_iter_type>;
 
+  // inherit check_ so we can check if a python object matches this generic
   using dict_base::contains;
   using dict_base::operator[];
+  using dict_base::check_;
   using dict_base::dict_base;
 
   value_type operator[](const K &key) const {

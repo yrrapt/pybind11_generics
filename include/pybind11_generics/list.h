@@ -16,6 +16,8 @@ public:
   using base_iter_type = py::detail::list_iterator;
   using const_iterator = cast_input_iterator<value_type, base_iter_type>;
 
+  // inherit check_ so we can check if a python object matches this generic
+  using list_base::check_;
   using list_base::list_base;
 
   value_type operator[](size_t index) const {
