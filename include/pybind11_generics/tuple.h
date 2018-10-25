@@ -4,6 +4,7 @@
 #include <tuple>
 #include <utility>
 
+#include <pybind11_generics/cast.h>
 #include <pybind11_generics/type_name.h>
 
 namespace py = pybind11;
@@ -23,8 +24,8 @@ public:
   explicit Tuple(size_t size = 0) : tuple_base(sizeof...(T)) {}
 
   template <int I> std::tuple_element_t<I, std::tuple<T...>> get() {
-    return tuple_base::operator[](I)
-        .template cast<std::tuple_element_t<I, std::tuple<T...>>>();
+    return cast_from_handle<std::tuple_element_t<I, std::tuple<T...>>>(
+        tuple_base::operator[](I));
   }
 };
 

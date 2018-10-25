@@ -27,8 +27,8 @@ public:
 
   value_type operator*() const {
     auto py_pair = *(this->iter_);
-    return std::make_pair(py_pair.first.template cast<K>(),
-                          py_pair.second.template cast<V>());
+    return std::make_pair(cast_from_handle<K>(py_pair.first),
+                          cast_from_handle<V>(py_pair.second));
   }
 };
 
@@ -45,12 +45,20 @@ public:
   using dict_base::dict_base;
 
   value_type operator[](const K &key) const {
-    return dict_base::operator[](py::cast(key)).template cast<V>();
+    if constexpr (pybind11::detail::is_pyobject<K>::value) {
+      return cast_from_handle<V>(dict_base::operator[](key));
+    } else {
+      return cast_from_handle<V>(dict_base::operator[](py::cast(key)));
+    }
   }
   const_iterator begin() const { return const_iterator(dict_base::begin()); }
   const_iterator end() const { return const_iterator(dict_base::end()); }
   bool contains(const K &key) const {
-    return dict_base::contains(py::cast(key));
+    if constexpr (pybind11::detail::is_pyobject<K>::value) {
+      return dict_base::contains(key);
+    } else {
+      return dict_base::contains(py::cast(key));
+    }
   }
 };
 

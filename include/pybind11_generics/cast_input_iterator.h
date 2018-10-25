@@ -2,9 +2,10 @@
 #define PYBIND11_GENERICS_CAST_INPUT_ITERATOR_H
 
 #include <iterator>
-#include <type_traits>
 
 #include <pybind11/pybind11.h>
+
+#include <pybind11_generics/cast.h>
 
 namespace py = pybind11;
 
@@ -29,19 +30,6 @@ public:
 protected:
   WrapIter iter_;
 
-  static value_type cast_value(const py::handle &val) {
-    if constexpr (std::is_same_v<value_type, py::object>) {
-      return pybind11::reinterpret_borrow<value_type>(val);
-    } else if constexpr (pybind11::detail::is_pyobject<value_type>::value) {
-      if (pybind11::isinstance<value_type>(val)) {
-        return pybind11::reinterpret_borrow<value_type>(val);
-      }
-      throw std::runtime_error("Cannot cast item to generic type!");
-    } else {
-      return val.template cast<value_type>();
-    }
-  }
-
 public:
   cast_input_iterator() = default;
 
@@ -52,7 +40,7 @@ public:
   }
   friend bool operator!=(const It &a, const It &b) { return !(a == b); }
 
-  const value_type operator*() const { return cast_value(*iter_); }
+  const value_type operator*() const { return cast_from_handle<T>(*iter_); }
   arrow_proxy operator->() const { return arrow_proxy(**this); }
 
   It &operator++() {
