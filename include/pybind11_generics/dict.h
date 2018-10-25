@@ -54,6 +54,20 @@ public:
   }
 };
 
-}; // namespace pybind11_generics
+} // namespace pybind11_generics
+
+namespace pybind11 {
+namespace detail {
+
+template <typename K, typename V>
+struct handle_type_name<pybind11_generics::Dict<K, V>> {
+  static PYBIND11_DESCR name() {
+    return _("Dict[") + handle_type_name<K>::name() + _(", ") +
+           handle_type_name<V>::name() + _("]");
+  }
+};
+
+} // namespace detail
+} // namespace pybind11
 
 #endif

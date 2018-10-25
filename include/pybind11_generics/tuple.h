@@ -28,6 +28,21 @@ public:
   }
 };
 
-}; // namespace pybind11_generics
+} // namespace pybind11_generics
+
+namespace pybind11 {
+namespace detail {
+
+template <typename... T>
+struct handle_type_name<pybind11_generics::Tuple<T...>> {
+  static PYBIND11_DESCR name() {
+    if constexpr (sizeof...(T) == 0)
+      return _("Tuple[()]");
+    return _("Tuple[") + concat(handle_type_name<T>::name()...) + _("]");
+  }
+};
+
+} // namespace detail
+} // namespace pybind11
 
 #endif
