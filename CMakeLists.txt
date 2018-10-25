@@ -56,5 +56,5 @@ target_sources(pybind11_generics INTERFACE
 )
 
 if (PYBIND11_GENERICS_TEST)
-  add_subdirectory(tests)
+  add_subdirectory(src)
 endif()
