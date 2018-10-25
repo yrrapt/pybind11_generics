@@ -6,6 +6,7 @@ set(SRC_FILES_TEST
   ${CMAKE_CURRENT_SOURCE_DIR}/test_dict.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_list.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_tuple.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_union.cpp
   )
 
 pybind11_add_module(test ${SRC_FILES_TEST})
