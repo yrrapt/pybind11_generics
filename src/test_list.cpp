@@ -16,6 +16,8 @@ public:
   explicit test_list(pyg::List<py::int_> val) {
     data_.reserve(val.size());
     data_.insert(data_.end(), val.begin(), val.end());
+    if (val.size() > 0)
+        data_[0] = val[0];
   }
 
   std::vector<int> get_data() { return data_; }

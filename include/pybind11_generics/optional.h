@@ -18,7 +18,9 @@ public:
 
   constexpr explicit operator bool() const noexcept { return has_value(); }
   constexpr bool has_value() const noexcept { return is_none(); }
-  constexpr const T value() const { return cast_from_handle<T>(*this); }
+  constexpr const T value() const {
+    return cast_from_handle<T>(py::handle(ptr()));
+  }
   constexpr const T operator*() const { return value(); }
 };
 

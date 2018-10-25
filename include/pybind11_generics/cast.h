@@ -10,7 +10,11 @@ namespace py = pybind11;
 
 namespace pybind11_generics {
 
-template <typename T> T cast_from_handle(const py::handle &val) {
+// SFINAE used to prevent implicit conversion; input argument must be handle
+// to avoid redundant reference creation
+template <typename T, typename H,
+          std::enable_if_t<std::is_same_v<py::handle, H>> * = nullptr>
+T cast_from_handle(const H &val) {
   if constexpr (std::is_same_v<T, py::object>) {
     return pybind11::reinterpret_borrow<T>(val);
   } else if constexpr (pybind11::detail::is_pyobject<T>::value) {

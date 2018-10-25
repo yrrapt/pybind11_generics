@@ -27,8 +27,13 @@ public:
   explicit Tuple(size_t size = 0) : tuple_base(sizeof...(T)) {}
 
   template <int I> std::tuple_element_t<I, std::tuple<T...>> get() {
+    PyObject *result = PyTuple_GetItem(ptr(), static_cast<ssize_t>(I));
+    if (!result) {
+      throw py::error_already_set();
+    }
+
     return cast_from_handle<std::tuple_element_t<I, std::tuple<T...>>>(
-        tuple_base::operator[](I));
+        py::handle(result));
   }
 };
 

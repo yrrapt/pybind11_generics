@@ -21,7 +21,11 @@ public:
   using list_base::list_base;
 
   value_type operator[](size_t index) const {
-    return cast_from_handle<value_type>(list_base::operator[](index));
+    PyObject *result = PyList_GetItem(ptr(), static_cast<ssize_t>(index));
+    if (!result) {
+      throw py::error_already_set();
+    }
+    return cast_from_handle<value_type>(py::handle(result));
   }
   const_iterator begin() const { return const_iterator(list_base::begin()); }
   const_iterator end() const { return const_iterator(list_base::end()); }

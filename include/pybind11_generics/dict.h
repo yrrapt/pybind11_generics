@@ -41,25 +41,32 @@ public:
   using const_iterator = dict_cast_input_iterator<K, V, base_iter_type>;
 
   // inherit check_ so we can check if a python object matches this generic
-  using dict_base::contains;
-  using dict_base::operator[];
   using dict_base::check_;
   using dict_base::dict_base;
 
   value_type operator[](const K &key) const {
+    PyObject *result;
     if constexpr (pybind11::detail::is_pyobject<K>::value) {
-      return cast_from_handle<V>(dict_base::operator[](key));
+      result = PyObject_GetItem(ptr(), key.ptr());
     } else {
-      return cast_from_handle<V>(dict_base::operator[](py::cast(key)));
+      auto tmp = py::cast(key);
+      result = PyObject_GetItem(ptr(), tmp.ptr());
     }
+
+    if (!result) {
+      throw py::error_already_set();
+    }
+    return cast_from_handle<V>(py::handle(result));
   }
+
   const_iterator begin() const { return const_iterator(dict_base::begin()); }
   const_iterator end() const { return const_iterator(dict_base::end()); }
   bool contains(const K &key) const {
     if constexpr (pybind11::detail::is_pyobject<K>::value) {
       return dict_base::contains(key);
     } else {
-      return dict_base::contains(py::cast(key));
+      auto tmp = py::cast(key);
+      return dict_base::contains(tmp);
     }
   }
 };
