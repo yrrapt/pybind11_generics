@@ -1,32 +1,16 @@
-# Prerequisites
-*.d
+# General files
+*.log
+*~
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# emacs related files
+TAGS
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+# C++ related files
 *.so
-*.dylib
-*.dll
 
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+# CMake related files
+_build
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
