@@ -20,6 +20,14 @@ template <> struct handle_type_name<std::string> {
 };
 
 // type name overrides
+template <> struct handle_type_name<py::int_> {
+  static PYBIND11_DESCR name() { return _("int"); }
+};
+
+template <> struct handle_type_name<py::float_> {
+  static PYBIND11_DESCR name() { return _("float"); }
+};
+
 template <> struct handle_type_name<py::list> {
   static PYBIND11_DESCR name() { return _("List[Any]"); }
 };
