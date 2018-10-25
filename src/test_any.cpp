@@ -9,7 +9,7 @@
 
 namespace py = pybind11;
 
-namespace pyg = pybind11_generic;
+namespace pyg = pybind11_generics;
 
 class test_any {
 private:

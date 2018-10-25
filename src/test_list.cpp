@@ -6,7 +6,7 @@
 
 #include "test_list.h"
 
-namespace pyg = pybind11_generic;
+namespace pyg = pybind11_generics;
 
 class test_list {
 private:

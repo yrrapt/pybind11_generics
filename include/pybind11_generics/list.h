@@ -8,7 +8,7 @@
 
 namespace py = pybind11;
 
-namespace pybind11_generic {
+namespace pybind11_generics {
 
 using list_base = py::list;
 

@@ -3,7 +3,7 @@
 
 #include <iterator>
 
-namespace pybind11_generic {
+namespace pybind11_generics {
 
 template <typename T, typename WrapIter> class cast_input_iterator {
 public:

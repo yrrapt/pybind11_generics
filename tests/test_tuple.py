@@ -17,3 +17,18 @@ def test_constructor(data, val):
     obj = test.TestTuple(data, val)
     assert obj.get_pair() == data
     assert obj.get_tuple() == val
+
+    
+def test_error():
+    """Check object errors when input has wrong data type."""
+    with pytest.raises(TypeError):
+        test.TestTuple([1, 2.0], [1, 2.5, 'foobar'])
+    with pytest.raises(RuntimeError):
+        test.TestTuple((1, 2.0), (1.5, 2.5, 'foobar'))
+    with pytest.raises(RuntimeError):
+        test.TestTuple((1, 2.0, 3), (1, 2, 'foobar'))
+    with pytest.raises(RuntimeError):
+        test.TestTuple((1,), (1, 2, 'foobar'))
+    with pytest.raises(RuntimeError):
+        test.TestTuple((1, 2.5), (1, 2, 'foobar', 'baz'))
+
