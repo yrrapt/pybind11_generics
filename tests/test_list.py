@@ -13,12 +13,12 @@ test_data = [
 
 @pytest.mark.parametrize("data", test_data)
 def test_constructor(data):
-    """Check Cython increment reference count of value objects."""
+    """Check object is constructed properly."""
     obj = test.TestList(data)
     assert obj.get_data() == data
 
 
 def test_error():
-    """Check Cython increment reference count of value objects."""
+    """Check object errors when input has wrong data type."""
     with pytest.raises(RuntimeError):
         test.TestList([1, 2, 3.5])
