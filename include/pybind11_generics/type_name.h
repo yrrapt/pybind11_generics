@@ -14,6 +14,8 @@ using Any = py::object;
 
 template <typename T> class List;
 
+template <typename K, typename V> class Dict;
+
 template <typename... T> class Tuple;
 
 }; // namespace pybind11_generics
@@ -39,6 +41,11 @@ template <typename T> struct handle_type_name<pybind11_generics::List<T>> {
   static PYBIND11_DESCR name() {
     return _("List[") + handle_type_name<T>::name() + _("]");
   }
+};
+
+template <typename K, typename V>
+struct handle_type_name<pybind11_generics::Dict<K, V>> {
+  static PYBIND11_DESCR name() { return _("FOOBAR"); }
 };
 
 template <typename... T>

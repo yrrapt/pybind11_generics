@@ -15,13 +15,13 @@ public:
   using It = cast_input_iterator;
 
   struct arrow_proxy {
-    T value;
+    value_type value;
 
-    explicit arrow_proxy(T &&value) : value(std::move(value)) {}
+    explicit arrow_proxy(value_type &&value) : value(std::move(value)) {}
     pointer operator->() const { return &value; }
   };
 
-private:
+protected:
   WrapIter iter_;
 
 public:
@@ -34,7 +34,7 @@ public:
   }
   friend bool operator!=(const It &a, const It &b) { return !(a == b); }
 
-  value_type operator*() const { return (*iter_).template cast<T>(); }
+  value_type operator*() const { return (*iter_).template cast<value_type>(); }
   arrow_proxy operator->() const { return arrow_proxy(**this); }
 
   It &operator++() {
@@ -48,6 +48,6 @@ public:
   }
 };
 
-} // namespace pybind11_generic
+} // namespace pybind11_generics
 
 #endif

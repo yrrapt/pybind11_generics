@@ -1,8 +1,6 @@
 #ifndef PYBIND11_GENERICS_LIST_H
 #define PYBIND11_GENERICS_LIST_H
 
-#include <pybind11/pybind11.h>
-
 #include <pybind11_generics/cast_input_iterator.h>
 #include <pybind11_generics/type_name.h>
 
@@ -12,7 +10,7 @@ namespace pybind11_generics {
 
 using list_base = py::list;
 
-template <typename T> class List : public py::list {
+template <typename T> class List : public list_base {
 public:
   using value_type = T;
   using base_iter_type = py::detail::list_iterator;
@@ -30,6 +28,6 @@ public:
   }
 };
 
-}; // namespace pybind11_generic
+}; // namespace pybind11_generics
 
 #endif
