@@ -14,7 +14,9 @@ template <typename T> class Optional : public optional_base {
 public:
   using optional_base::optional_base;
 
-  static bool check_(handle h) { return h.is_none() || T::check_(h); }
+  static bool check_(const handle &h) {
+    return h.is_none() || py::isinstance<T>(h);
+  }
 
   constexpr explicit operator bool() const noexcept { return has_value(); }
   constexpr bool has_value() const noexcept { return is_none(); }
