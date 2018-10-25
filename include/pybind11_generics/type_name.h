@@ -5,6 +5,8 @@
 
 #include <pybind11/pybind11.h>
 
+namespace py = pybind11;
+
 namespace pybind11 {
 namespace detail {
 
@@ -15,6 +17,19 @@ template <> struct handle_type_name<double> {
 
 template <> struct handle_type_name<std::string> {
   static PYBIND11_DESCR name() { return _("str"); }
+};
+
+// type name overrides
+template <> struct handle_type_name<py::list> {
+  static PYBIND11_DESCR name() { return _("List[Any]"); }
+};
+
+template <> struct handle_type_name<py::dict> {
+  static PYBIND11_DESCR name() { return _("Dict[Any, Any]"); }
+};
+
+template <> struct handle_type_name<py::tuple> {
+  static PYBIND11_DESCR name() { return _("Tuple[Any, ...]"); }
 };
 
 } // namespace detail
