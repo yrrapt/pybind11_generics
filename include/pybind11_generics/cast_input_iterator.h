@@ -1,6 +1,8 @@
 #ifndef PYBIND11_GENERICS_CAST_INPUT_ITERATOR_H
 #define PYBIND11_GENERICS_CAST_INPUT_ITERATOR_H
 
+#include <iterator>
+
 namespace pybind11_generic {
 
 template <typename T, typename WrapIter> class cast_input_iterator {

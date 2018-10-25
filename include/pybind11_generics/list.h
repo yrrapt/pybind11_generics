@@ -4,6 +4,7 @@
 #include <pybind11/pybind11.h>
 
 #include <pybind11_generics/cast_input_iterator.h>
+#include <pybind11_generics/type_name.h>
 
 namespace py = pybind11;
 
@@ -30,14 +31,5 @@ public:
 };
 
 }; // namespace pybind11_generic
-
-namespace pybind11 {
-namespace detail {
-template <typename T> struct handle_type_name<pybind11_generic::List<T>> {
-  static PYBIND11_DESCR name() { return _("List[") + _<T>() + _("]"); }
-};
-
-} // namespace detail
-} // namespace pybind11
 
 #endif

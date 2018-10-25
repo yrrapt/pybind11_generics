@@ -1,14 +1,10 @@
-#include <iostream>
-#include <iterator>
-#include <typeinfo>
 #include <vector>
 
-#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 #include <pybind11_generics/list.h>
 
-namespace py = pybind11;
+#include "test_list.h"
 
 namespace pyg = pybind11_generic;
 
@@ -26,10 +22,7 @@ public:
   pyg::List<int> get_py_data() { return py::cast(data_); }
 };
 
-PYBIND11_MODULE(test, m) {
-  m.doc() = "This package contains test wrapper classes for generic "
-            "data types.";
-
+void bind_test_list(py::module &m) {
   py::class_<test_list>(m, "TestList")
       .def(py::init<pyg::List<int>>(), "initialize with given list.")
       .def("get_data", &test_list::get_data, "Get a copy of the data.")
