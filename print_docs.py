@@ -7,6 +7,7 @@ test_classes = [
     test.TestTuple,
     test.TestDict,
     test.TestUnion,
+    test.TestOptional,
 ]
 
 for cls in test_classes:
