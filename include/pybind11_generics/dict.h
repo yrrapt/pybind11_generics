@@ -39,13 +39,32 @@ template <typename K, typename V> class Dict : public dict_base {
     using base_iter_type = py::detail::dict_iterator;
     using const_iterator = dict_cast_input_iterator<K, V, base_iter_type>;
 
+  private:
+    template <class M> void insert_or_assign_helper(PyObject *key_ptr, M &&obj) {
+        int code;
+        if constexpr (py::detail::is_pyobject<M>::value) {
+            code = PyObject_SetItem(ptr(), key_ptr, obj.ptr());
+        } else {
+            auto val_obj = py::cast(V(std::forward<M>(obj)));
+            code = PyObject_SetItem(ptr(), key_ptr, val_obj.ptr());
+        }
+        if (code != 0) {
+            throw py::error_already_set();
+        }
+    }
+
+  public:
     // inherit check_ so we can check if a python object matches this generic
     using dict_base::check_;
     using dict_base::dict_base;
 
     value_type operator[](const K &key) const {
-        auto tmp = py::detail::object_or_cast(key);
-        PyObject *result = PyObject_GetItem(ptr(), tmp.ptr());
+        PyObject *result;
+        if constexpr (py::detail::is_pyobject<K>::value) {
+            *result = PyObject_GetItem(ptr(), key.ptr());
+        } else {
+            *result = PyObject_GetItem(ptr(), py::cast(key).ptr());
+        }
 
         if (!result) {
             throw py::error_already_set();
@@ -53,14 +72,23 @@ template <typename K, typename V> class Dict : public dict_base {
         return cast_from_handle<V>(py::handle(result));
     }
 
+    template <class M> void insert_or_assign(const K &k, M &&obj) {
+        auto key_obj = py::detail::object_or_cast(k);
+        insert_or_assign_helper(key_obj.ptr(), std::forward<M>(obj));
+    }
+
+    template <class M> void insert_or_assign(K &&k, M &&obj) {
+        auto key_obj = py::detail::object_or_cast(std::move(k));
+        insert_or_assign_helper(key_obj.ptr(), std::forward<M>(obj));
+    }
+
     const_iterator begin() const { return const_iterator(dict_base::begin()); }
     const_iterator end() const { return const_iterator(dict_base::end()); }
     bool contains(const K &key) const {
-        if constexpr (pybind11::detail::is_pyobject<K>::value) {
+        if constexpr (py::detail::is_pyobject<K>::value) {
             return dict_base::contains(key);
         } else {
-            auto tmp = py::cast(key);
-            return dict_base::contains(tmp);
+            return dict_base::contains(py::cast(key));
         }
     }
 };

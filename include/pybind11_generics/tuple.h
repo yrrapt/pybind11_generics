@@ -2,6 +2,7 @@
 #define PYBIND11_GENERICS_TUPLE_H
 
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 #include <pybind11_generics/cast.h>
@@ -10,6 +11,32 @@
 namespace py = pybind11;
 
 namespace pybind11_generics {
+
+namespace detail {
+
+template <ssize_t n> struct set_tuple {
+    template <typename U, typename... Us>
+    constexpr void operator()(PyObject *tup, U &&arg0, Us &&... args) {
+        // PyTuple_SetItem steals reference
+        if constexpr (py::detail::is_pyobject<U>::value) {
+            if constexpr (std::is_lvalue_reference_v<U>) {
+                // lvalue, incref before setItem steals reference
+                PyTuple_SET_ITEM(tup, n, arg0.inc_ref().ptr());
+            } else {
+                // rvalue, just steal reference
+                PyTuple_SET_ITEM(tup, n, arg0.ptr());
+            }
+        } else {
+            // create temporary object, release (so destructor don't decrement reference),
+            // then pass the released pointer to SetItem for it to steal
+            PyTuple_SET_ITEM(tup, n, py::cast(std::forward<U>(arg0)).release().ptr());
+        }
+        set_tuple<n + 1>{}(tup, args...);
+    }
+    constexpr void operator()(PyObject *tup) {}
+};
+
+} // namespace detail
 
 using tuple_base = py::tuple;
 
@@ -32,6 +59,13 @@ template <typename... T> class Tuple : public tuple_base {
         }
 
         return cast_from_handle<std::tuple_element_t<I, std::tuple<T...>>>(py::handle(result));
+    }
+
+    friend Tuple make_tuple(T &&... args) {
+        PyObject *result = PyTuple_New((ssize_t)sizeof...(T));
+        detail::set_tuple<0>{}(result, args...);
+
+        return {result, stolen_t{}};
     }
 };
 
