@@ -54,7 +54,7 @@ template <typename... T> class Union : public union_base {
             return index_.value();
         index_ = find_index(*this);
         if (!index_.has_value())
-            throw std::runtime_error("Invalid union data type.");
+            throw py::type_error("Invalid union data type.");
         return index_.value();
     }
 

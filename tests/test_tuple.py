@@ -25,10 +25,10 @@ def test_error():
         test.TestTuple([1, 2.0], [1, 2.5, 'foobar'])
     with pytest.raises(RuntimeError):
         test.TestTuple((1, 2.0), (1.5, 2.5, 'foobar'))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         test.TestTuple((1, 2.0, 3), (1, 2, 'foobar'))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         test.TestTuple((1,), (1, 2, 'foobar'))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         test.TestTuple((1, 2.5), (1, 2, 'foobar', 'baz'))
 

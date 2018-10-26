@@ -21,5 +21,5 @@ def test_constructor(data):
 
 def test_error():
     """Check object errors when input has wrong data type."""
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         test.TestList([1, 2, 3.5])

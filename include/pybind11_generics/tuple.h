@@ -47,7 +47,7 @@ template <typename... T> class Tuple : public tuple_base {
 
     template <class... Args> Tuple(Args &&... args) : tuple_base(std::forward<Args>(args)...) {
         if (size() != sizeof...(T))
-            throw std::runtime_error("Generic Tuple length mismatch!");
+            throw py::type_error("Generic Tuple length mismatch!");
     }
 
     explicit Tuple(size_t size = 0) : tuple_base(sizeof...(T)) {}

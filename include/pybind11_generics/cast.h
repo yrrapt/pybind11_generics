@@ -20,7 +20,23 @@ T cast_from_handle(const H &val) {
         if (pybind11::isinstance<T>(val)) {
             return pybind11::reinterpret_borrow<T>(val);
         }
-        throw std::runtime_error("Cannot cast item to generic type!");
+        throw py::type_error("Cannot cast item to generic type!");
+    } else {
+        return val.template cast<T>();
+    }
+}
+
+// SFINAE used to prevent implicit conversion; input argument must be handle
+// to avoid redundant reference creation
+template <typename T, typename H, std::enable_if_t<std::is_same_v<py::handle, H>> * = nullptr>
+T cast_from_handle_steal(const H &val) {
+    if constexpr (std::is_same_v<T, py::object>) {
+        return pybind11::reinterpret_steal<T>(val);
+    } else if constexpr (pybind11::detail::is_pyobject<T>::value) {
+        if (pybind11::isinstance<T>(val)) {
+            return pybind11::reinterpret_steal<T>(val);
+        }
+        throw py::type_error("Cannot cast item to generic type!");
     } else {
         return val.template cast<T>();
     }
