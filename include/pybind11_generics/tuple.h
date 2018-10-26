@@ -14,7 +14,7 @@ namespace pybind11_generics {
 
 namespace detail {
 
-template <ssize_t n> struct set_tuple {
+template <Py_ssize_t n> struct set_tuple {
     template <typename U, typename... Us>
     constexpr void operator()(PyObject *tup, U &&arg0, Us &&... args) {
         // PyTuple_SetItem steals reference
@@ -53,7 +53,7 @@ template <typename... T> class Tuple : public tuple_base {
     explicit Tuple(size_t size = 0) : tuple_base(sizeof...(T)) {}
 
     template <std::size_t I> std::tuple_element_t<I, std::tuple<T...>> get() {
-        PyObject *result = PyTuple_GetItem(ptr(), static_cast<ssize_t>(I));
+        PyObject *result = PyTuple_GetItem(ptr(), static_cast<Py_ssize_t>(I));
         if (!result) {
             throw py::error_already_set();
         }
@@ -62,7 +62,7 @@ template <typename... T> class Tuple : public tuple_base {
     }
 
     friend Tuple make_tuple(T &&... args) {
-        PyObject *result = PyTuple_New((ssize_t)sizeof...(T));
+        PyObject *result = PyTuple_New((Py_ssize_t)sizeof...(T));
         detail::set_tuple<0>{}(result, args...);
 
         return {result, stolen_t{}};

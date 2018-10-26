@@ -21,7 +21,7 @@ template <typename T> class List : public list_base {
     using list_base::list_base;
 
     value_type operator[](size_t index) const {
-        PyObject *result = PyList_GetItem(ptr(), static_cast<ssize_t>(index));
+        PyObject *result = PyList_GetItem(ptr(), static_cast<Py_ssize_t>(index));
         if (!result) {
             throw py::error_already_set();
         }
