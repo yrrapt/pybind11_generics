@@ -1,5 +1,7 @@
 #include <vector>
 
+#include <pybind11/stl.h>
+
 #include <pybind11_generics/iterator.h>
 
 #include "test_iter.h"
