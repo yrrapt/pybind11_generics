@@ -5,14 +5,21 @@
 
 namespace pybind11_generics {
 
-using Any = pybind11::object;
+    using any_base = py::object;
+
+    class Any : public any_base {
+    public:
+        using any_base::any_base;
+
+        static bool check_(const handle &h) { return h.ptr() != nullptr; }
+    };
 
 } // namespace pybind11_generics
 
 namespace pybind11 {
 namespace detail {
 
-template <> struct handle_type_name<pybind11::object> { static constexpr auto name = _("Any"); };
+template <> struct handle_type_name<pybind11_generics::Any> { static constexpr auto name = _("Any"); };
 
 } // namespace detail
 } // namespace pybind11
