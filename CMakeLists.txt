@@ -45,7 +45,7 @@ include(CMakePackageConfigHelpers)
 # Include pybind11
 # enable C++17 support for variant/optional wrapping
 set(PYBIND11_CPP_STANDARD --std=c++1z)
-find_package(pybind11 REQUIRED)
+add_subdirectory(pybind11)
 
 # Define pybind11_generics interface library
 add_library(pybind11_generics INTERFACE)
