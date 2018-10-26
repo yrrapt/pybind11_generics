@@ -101,7 +101,7 @@ template <typename Iter, typename Sentinel, py::return_value_policy Policy> clas
     }
 };
 
-template <typename Iter, typename Sentinel,
+template <typename Iter, typename Sentinel = Iter,
           py::return_value_policy Policy = py::return_value_policy::reference_internal>
 void declare_iterator() {
     typedef IteratorState<Iter, Sentinel, Policy> state;
@@ -111,8 +111,8 @@ void declare_iterator() {
         .def("__next__", &state::get_next, Policy);
 }
 
-template <py::return_value_policy Policy = py::return_value_policy::reference_internal,
-          typename Iter, typename Sentinel>
+template <typename Iter, typename Sentinel = Iter,
+          py::return_value_policy Policy = py::return_value_policy::reference_internal>
 auto make_iterator(Iter first, Sentinel last)
     -> Iterator<std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<Iter>())>>> {
     typedef IteratorState<Iter, Sentinel, Policy> state;
