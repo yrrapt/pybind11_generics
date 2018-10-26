@@ -43,7 +43,7 @@ namespace pybind11 {
 namespace detail {
 
 template <typename T> struct handle_type_name<pybind11_generics::List<T>> {
-    static PYBIND11_DESCR name() { return _("List[") + handle_type_name<T>::name() + _("]"); }
+    static constexpr auto name = _("List[") + handle_type_name<T>::name + _("]");
 };
 
 } // namespace detail

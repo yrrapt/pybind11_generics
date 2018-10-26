@@ -12,9 +12,7 @@ using Any = pybind11::object;
 namespace pybind11 {
 namespace detail {
 
-template <> struct handle_type_name<pybind11::object> {
-    static PYBIND11_DESCR name() { return _("Any"); }
-};
+template <> struct handle_type_name<pybind11::object> { static constexpr auto name = _("Any"); };
 
 } // namespace detail
 } // namespace pybind11
