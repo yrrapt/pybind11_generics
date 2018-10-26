@@ -13,7 +13,7 @@ namespace pybind11 {
 namespace detail {
 
 template <> struct handle_type_name<pybind11::object> {
-  static PYBIND11_DESCR name() { return _("Any"); }
+    static PYBIND11_DESCR name() { return _("Any"); }
 };
 
 } // namespace detail

@@ -10,20 +10,20 @@
 namespace pyg = pybind11_generics;
 
 class test_optional {
-public:
-  using value_type = pyg::Optional<pyg::List<int>>;
+  public:
+    using value_type = pyg::Optional<pyg::List<int>>;
 
-private:
-  value_type data_;
+  private:
+    value_type data_;
 
-public:
-  explicit test_optional(value_type val) : data_(std::move(val)) {}
+  public:
+    explicit test_optional(value_type val) : data_(std::move(val)) {}
 
-  const value_type &get_data() { return data_; }
+    const value_type &get_data() { return data_; }
 };
 
 void bind_test_optional(py::module &m) {
-  py::class_<test_optional>(m, "TestOptional")
-      .def(py::init<pyg::Optional<pyg::List<int>>>(), "initializer.")
-      .def("get_data", &test_optional::get_data, "get data.");
+    py::class_<test_optional>(m, "TestOptional")
+        .def(py::init<pyg::Optional<pyg::List<int>>>(), "initializer.")
+        .def("get_data", &test_optional::get_data, "get data.");
 }

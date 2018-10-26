@@ -11,19 +11,15 @@ namespace pybind11_generics {
 using optional_base = py::object;
 
 template <typename T> class Optional : public optional_base {
-public:
-  using optional_base::optional_base;
+  public:
+    using optional_base::optional_base;
 
-  static bool check_(const handle &h) {
-    return h.is_none() || py::isinstance<T>(h);
-  }
+    static bool check_(const handle &h) { return h.is_none() || py::isinstance<T>(h); }
 
-  constexpr explicit operator bool() const noexcept { return has_value(); }
-  constexpr bool has_value() const noexcept { return is_none(); }
-  constexpr const T value() const {
-    return cast_from_handle<T>(py::handle(ptr()));
-  }
-  constexpr const T operator*() const { return value(); }
+    constexpr explicit operator bool() const noexcept { return has_value(); }
+    constexpr bool has_value() const noexcept { return is_none(); }
+    constexpr const T value() const { return cast_from_handle<T>(py::handle(ptr())); }
+    constexpr const T operator*() const { return value(); }
 };
 
 } // namespace pybind11_generics
@@ -32,9 +28,7 @@ namespace pybind11 {
 namespace detail {
 
 template <typename T> struct handle_type_name<pybind11_generics::Optional<T>> {
-  static PYBIND11_DESCR name() {
-    return _("Optional[") + handle_type_name<T>::name() + _("]");
-  }
+    static PYBIND11_DESCR name() { return _("Optional[") + handle_type_name<T>::name() + _("]"); }
 };
 
 } // namespace detail
