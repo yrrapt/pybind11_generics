@@ -4,6 +4,7 @@ set(SRC_FILES_TEST
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_any.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_dict.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_iter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_list.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_optional.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_tuple.cpp

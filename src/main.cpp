@@ -1,6 +1,7 @@
 
 #include "test_any.h"
 #include "test_dict.h"
+#include "test_iter.h"
 #include "test_list.h"
 #include "test_optional.h"
 #include "test_tuple.h"
@@ -16,4 +17,5 @@ PYBIND11_MODULE(test, m) {
     bind_test_dict(m);
     bind_test_union(m);
     bind_test_optional(m);
+    bind_test_iter(m);
 }

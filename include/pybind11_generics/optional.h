@@ -12,9 +12,9 @@ using optional_base = py::object;
 
 template <typename T> class Optional : public optional_base {
   public:
-    using optional_base::optional_base;
+    static bool optional_check(const handle &h) { return h.is_none() || py::isinstance<T>(h); }
 
-    static bool check_(const handle &h) { return h.is_none() || py::isinstance<T>(h); }
+    PYBIND11_OBJECT_DEFAULT(Optional, optional_base, optional_check);
 
     constexpr explicit operator bool() const noexcept { return has_value(); }
     constexpr bool has_value() const noexcept { return is_none(); }
