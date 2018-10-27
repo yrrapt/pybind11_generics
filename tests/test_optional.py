@@ -2,30 +2,33 @@
 
 import pytest
 
-import test
+import pyg_test
 
 test_data = [
-    None,
-    [],
-    [1, 2],
+    (pyg_test.TestOptional, None),
+    (pyg_test.TestOptional, []),
+    (pyg_test.TestOptional, [1, 2]),
+]
+
+fail_data = [
+    (pyg_test.TestOptional, TypeError, ()),
+    (pyg_test.TestOptional, TypeError, 3),
+    (pyg_test.TestOptional, TypeError, 'foobar'),
 ]
 
 
-@pytest.mark.parametrize("data", test_data)
-def test_constructor(data):
+@pytest.mark.parametrize("cls,data", test_data)
+def test_constructor(cls, data):
     """Check object is constructed properly."""
-    obj = test.TestOptional(data)
+    obj = cls(data)
     if data is None:
         assert obj.get_data() is None
     else:
         assert obj.get_data() == data
 
 
-def test_error():
+@pytest.mark.parametrize("cls,err,data", fail_data)
+def test_error(cls, err, data):
     """Check object errors when input has wrong data type."""
-    with pytest.raises(TypeError):
-        test.TestOptional(())
-    with pytest.raises(TypeError):
-        test.TestOptional(3)
-    with pytest.raises(TypeError):
-        test.TestOptional("foobar")
+    with pytest.raises(err):
+        cls(data)

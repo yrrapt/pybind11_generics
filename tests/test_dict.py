@@ -2,29 +2,31 @@
 
 import pytest
 
-import test
+import pyg_test
 
 test_data = [
-    {},
-    {'hi': 1, 'bye': 2},
-    {'hi': 3, 'foo': 2, 'bar': -1},
+    (pyg_test.TestDict, {}),
+    (pyg_test.TestDict, {'hi': 1, 'bye': 2}),
+    (pyg_test.TestDict, {'hi': 3, 'foo': 2, 'bar': -1}),
+]
+
+fail_data = [
+    (pyg_test.TestDict, TypeError, [('hi', 2)]),
+    (pyg_test.TestDict, RuntimeError, {'hi': 1.5}),
+    (pyg_test.TestDict, RuntimeError, {1: 1}),
+    (pyg_test.TestDict, RuntimeError, {1: 'bye'}),
 ]
 
 
-@pytest.mark.parametrize("data", test_data)
-def test_constructor(data):
+@pytest.mark.parametrize("cls,data", test_data)
+def test_constructor(cls, data):
     """Check object is constructed properly."""
-    obj = test.TestDict(data)
+    obj = cls(data)
     assert obj.get_data() == data
 
 
-def test_error():
+@pytest.mark.parametrize("cls,err,data", fail_data)
+def test_error(cls, err, data):
     """Check object errors when input has wrong data type."""
-    with pytest.raises(TypeError):
-        test.TestDict([('hi', 2)])
-    with pytest.raises(RuntimeError):
-        test.TestDict({'hi': 1.5})
-    with pytest.raises(RuntimeError):
-        test.TestDict({1: 1})
-    with pytest.raises(RuntimeError):
-        test.TestDict({1: 'bye'})
+    with pytest.raises(err):
+        cls(data)

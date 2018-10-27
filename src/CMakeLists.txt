@@ -11,9 +11,9 @@ set(SRC_FILES_TEST
   ${CMAKE_CURRENT_SOURCE_DIR}/test_union.cpp
   )
 
-pybind11_add_module(test ${SRC_FILES_TEST})
+pybind11_add_module(pyg_test ${SRC_FILES_TEST})
 
-target_link_libraries(test
+target_link_libraries(pyg_test
   PRIVATE
   pybind11_generics
   )
