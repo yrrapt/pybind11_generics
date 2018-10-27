@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 
-import pydoc
+from typing import List
 
 
-def get_help_str(obj: object) -> str:
-    return pydoc.render_doc(obj)
+def get_help_strs(obj: object) -> List[str]:
+    return obj.__doc__.splitlines()

@@ -6,8 +6,7 @@ import pytest
 
 import pyg_test
 
-from .util import get_help_str
-
+from .util import get_help_strs
 
 test_data = [
     (pyg_test.TestIterString, []),
@@ -32,7 +31,30 @@ fail_data = [
 ]
 
 doc_data = [
-
+    (pyg_test.TestIterString.__init__,
+     ['__init__(self, arg0: Iterator[str]) -> None',
+      '',
+      'initializer.',
+      ],
+     ),
+    (pyg_test.TestIterString.get_iter,
+     ['get_iter(self) -> Iterator[str]',
+      '',
+      'Get iterator.',
+      ],
+     ),
+    (pyg_test.TestIterPair.__init__,
+     ['__init__(self, arg0: Iterator[Tuple[int, int]]) -> None',
+      '',
+      'initializer.',
+      ],
+     ),
+    (pyg_test.TestIterPair.get_iter,
+     ['get_iter(self) -> Iterator[Tuple[int, int]]',
+      '',
+      'Get iterator.',
+      ],
+     ),
 ]
 
 
@@ -56,3 +78,10 @@ def test_error(cls, err, data):
     """Check object errors when input has wrong data type."""
     with pytest.raises(err):
         cls(data)
+
+
+@pytest.mark.parametrize("obj,doc_lines", doc_data)
+def test_doc(obj, doc_lines):
+    """Check object errors when input has wrong data type."""
+    for line1, line2 in zip_longest(get_help_strs(obj), doc_lines):
+        assert line1 == line2
