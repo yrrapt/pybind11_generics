@@ -15,7 +15,10 @@ def get_signature(obj: object) -> str:
 
 def do_constructor_test(cls: Type[Any], data: object) -> None:
     obj = cls(data)
-    assert obj.get_data() == data
+    if data is None:
+        assert obj.get_data() is None
+    else:
+        assert obj.get_data() == data
 
 
 def do_error_test(cls: Type[Any], err: object, data: object) -> None:
