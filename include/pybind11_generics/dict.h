@@ -83,7 +83,9 @@ template <typename K, typename V> class Dict : public dict_base {
     }
 
     const_iterator begin() const { return const_iterator(dict_base::begin()); }
+
     const_iterator end() const { return const_iterator(dict_base::end()); }
+
     bool contains(const K &key) const {
         if constexpr (py::detail::is_pyobject<K>::value) {
             return dict_base::contains(key);
@@ -99,8 +101,8 @@ namespace pybind11 {
 namespace detail {
 
 template <typename K, typename V> struct handle_type_name<pybind11_generics::Dict<K, V>> {
-    static constexpr auto name =
-        _("Dict[") + handle_type_name<K>::name + _(", ") + handle_type_name<V>::name + _("]");
+    static constexpr auto name = _("Dict[") + py::detail::make_caster<K>::name + _(", ") +
+                                 py::detail::make_caster<V>::name + _("]");
 };
 
 } // namespace detail

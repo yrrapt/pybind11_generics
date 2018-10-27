@@ -125,7 +125,7 @@ namespace pybind11 {
 namespace detail {
 
 template <typename T> struct handle_type_name<pybind11_generics::Iterator<T>> {
-    static constexpr auto name = _("Iterator[") + handle_type_name<T>::name + _("]");
+    static constexpr auto name = _("Iterator[") + py::detail::make_caster<T>::name + _("]");
 };
 
 } // namespace detail

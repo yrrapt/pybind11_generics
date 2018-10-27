@@ -71,8 +71,8 @@ template <typename... T> class Union : public union_base {
 namespace pybind11 {
 namespace detail {
 
-template <typename T> struct handle_type_name<pybind11_generics::Union<T>> {
-    static constexpr auto name = _("Union[") + handle_type_name<T>::name + _("]");
+template <typename... T> struct handle_type_name<pybind11_generics::Union<T...>> {
+    static constexpr auto name = _("Union[") + concat(py::detail::make_caster<T>::name...) + _("]");
 };
 
 } // namespace detail

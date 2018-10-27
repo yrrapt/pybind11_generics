@@ -28,7 +28,7 @@ namespace pybind11 {
 namespace detail {
 
 template <typename T> struct handle_type_name<pybind11_generics::Optional<T>> {
-    static constexpr auto name = _("Optional[") + handle_type_name<T>::name + _("]");
+    static constexpr auto name = _("Optional[") + py::detail::make_caster<T>::name + _("]");
 };
 
 } // namespace detail

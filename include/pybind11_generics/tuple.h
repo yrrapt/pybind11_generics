@@ -79,7 +79,7 @@ template <typename... T> struct handle_type_name<pybind11_generics::Tuple<T...>>
         if constexpr (sizeof...(T) == 0)
             return _("Tuple[()]");
         else
-            return _("Tuple[") + concat(handle_type_name<T>::name...) + _("]");
+            return _("Tuple[") + concat(py::detail::make_caster<T>::name...) + _("]");
     }
 
     static constexpr auto name = name_fun();
