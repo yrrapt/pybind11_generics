@@ -3,7 +3,8 @@ import pyg_test
 
 test_classes = [
     pyg_test.TestList,
-    pyg_test.TestAny,
+    pyg_test.TestAnyList,
+    pyg_test.TestAnyVal,
     pyg_test.TestTuple,
     pyg_test.TestDict,
     pyg_test.TestUnion,
