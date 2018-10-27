@@ -24,6 +24,6 @@ class test_optional {
 
 void bind_test_optional(py::module &m) {
     py::class_<test_optional>(m, "TestOptional")
-        .def(py::init<pyg::Optional<pyg::List<int>>>(), "initializer.")
-        .def("get_data", &test_optional::get_data, "get data.");
+        .def(py::init<pyg::Optional<pyg::List<int>>>(), "Initializer.")
+        .def("get_data", &test_optional::get_data, "Get a copy of the data.");
 }

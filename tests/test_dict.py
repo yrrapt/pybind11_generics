@@ -4,6 +4,8 @@ import pytest
 
 import pyg_test
 
+from .util import do_constructor_test, do_error_test, do_doc_test
+
 test_data = [
     (pyg_test.TestDict, {}),
     (pyg_test.TestDict, {'hi': 1, 'bye': 2}),
@@ -17,16 +19,24 @@ fail_data = [
     (pyg_test.TestDict, RuntimeError, {1: 'bye'}),
 ]
 
+doc_data = [
+    (pyg_test.TestDict, 'Dict[str, int]'),
+]
+
 
 @pytest.mark.parametrize("cls,data", test_data)
 def test_constructor(cls, data):
     """Check object is constructed properly."""
-    obj = cls(data)
-    assert obj.get_data() == data
+    do_constructor_test(cls, data)
 
 
 @pytest.mark.parametrize("cls,err,data", fail_data)
 def test_error(cls, err, data):
     """Check object errors when input has wrong data type."""
-    with pytest.raises(err):
-        cls(data)
+    do_error_test(cls, err, data)
+
+
+@pytest.mark.parametrize("cls,type_str", doc_data)
+def test_doc(cls, type_str):
+    """Check object has correct doc string."""
+    do_doc_test(cls, type_str)

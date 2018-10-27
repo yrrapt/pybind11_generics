@@ -52,12 +52,12 @@ void bind_test_iter(py::module &m) {
     pyg::declare_iterator<vec_pair::const_iterator>();
 
     py::class_<test_iter_str>(m, "TestIterString")
-        .def(py::init<pyg::Iterator<std::string>>(), "initializer.")
+        .def(py::init<pyg::Iterator<std::string>>(), "Initializer.")
         .def("get_iter", &test_iter_str::get_iter, "Get iterator.")
         .def("get_data", &test_iter_str::get_data, "Get a copy of the data.");
 
     py::class_<test_iter_pair>(m, "TestIterPair")
-            .def(py::init<pyg::Iterator<std::pair<int, int>>>(), "initializer.")
+            .def(py::init<pyg::Iterator<std::pair<int, int>>>(), "Initializer.")
             .def("get_iter", &test_iter_pair::get_iter, "Get iterator.")
             .def("get_data", &test_iter_pair::get_data, "Get a copy of the data.");
 }

@@ -20,6 +20,6 @@ class test_dict {
 
 void bind_test_dict(py::module &m) {
     py::class_<test_dict>(m, "TestDict")
-        .def(py::init<pyg::Dict<std::string, int>>(), "initializer.")
-        .def("get_data", &test_dict::get_data, "get data.");
+        .def(py::init<pyg::Dict<std::string, int>>(), "Initializer.")
+        .def("get_data", &test_dict::get_data, "Get a copy of the data.");
 }

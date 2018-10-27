@@ -21,12 +21,10 @@ class test_list {
     }
 
     std::vector<int> get_data() { return data_; }
-    pyg::List<int> get_py_data() { return py::cast(data_); }
 };
 
 void bind_test_list(py::module &m) {
     py::class_<test_list>(m, "TestList")
-        .def(py::init<pyg::List<py::int_>>(), "initialize with given list.")
-        .def("get_data", &test_list::get_data, "Get a copy of the data.")
-        .def("get_py_data", &test_list::get_py_data, "Get a copy of the data.");
+        .def(py::init<pyg::List<py::int_>>(), "Initializer.")
+        .def("get_data", &test_list::get_data, "Get a copy of the data.");
 }

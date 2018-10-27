@@ -33,7 +33,7 @@ class test_tuple {
 void bind_test_tuple(py::module &m) {
     py::class_<test_tuple>(m, "TestTuple")
         .def(py::init<pyg::Tuple<int, double>, pyg::Tuple<int, double, std::string>>(),
-             "initializer.")
+             "Initializer.")
         .def("get_pair", &test_tuple::get_pair, "Get a copy of the data.")
         .def("get_tuple", &test_tuple::get_tuple, "Get a copy of the data.");
 }

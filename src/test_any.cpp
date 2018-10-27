@@ -36,9 +36,9 @@ public:
 
 void bind_test_any(py::module &m) {
     py::class_<test_any_list>(m, "TestAnyList")
-        .def(py::init<pyg::List<pyg::Any>>(), "initializer.")
+        .def(py::init<pyg::List<pyg::Any>>(), "Initializer.")
         .def("get_data", &test_any_list::get_data, "Get a copy of the data.");
     py::class_<test_any_val>(m, "TestAnyVal")
-            .def(py::init<pyg::Any>(), "initializer.")
+            .def(py::init<pyg::Any>(), "Initializer.")
             .def("get_data", &test_any_val::get_data, "Get a copy of the data.");
 }

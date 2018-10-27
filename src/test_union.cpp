@@ -24,7 +24,7 @@ class test_union {
 
 void bind_test_union(py::module &m) {
     py::class_<test_union>(m, "TestUnion")
-        .def(py::init<test_union::value_type>(), "initializer.")
-        .def("get_data", &test_union::get_data, "get data.")
+        .def(py::init<test_union::value_type>(), "Initializer.")
+        .def("get_data", &test_union::get_data, "Get a copy of the data.")
         .def("index", &test_union::index);
 }
