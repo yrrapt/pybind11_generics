@@ -8,6 +8,8 @@ test_classes = [
     test.TestDict,
     test.TestUnion,
     test.TestOptional,
+    test.TestIterString,
+    test.TestIterPair,
 ]
 
 for cls in test_classes:
