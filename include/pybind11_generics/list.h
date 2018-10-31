@@ -1,6 +1,8 @@
 #ifndef PYBIND11_GENERICS_LIST_H
 #define PYBIND11_GENERICS_LIST_H
 
+#include <type_traits>
+
 #include <pybind11_generics/cast_input_iterator.h>
 #include <pybind11_generics/type_name.h>
 
@@ -12,7 +14,8 @@ using list_base = py::list;
 
 template <typename T> class List : public list_base {
   public:
-    using value_type = T;
+    using value_type = std::remove_reference_t<T>;
+    using const_reference = const value_type &;
     using base_iter_type = py::detail::list_iterator;
     using const_iterator = cast_input_iterator<value_type, base_iter_type>;
 
@@ -33,6 +36,9 @@ template <typename T> class List : public list_base {
     void append(const value_type &val) const { list_base::append<value_type>(val); }
     void push_back(value_type &&val) { append(std::move(val)); }
     void push_back(const value_type &val) { append(val); }
+    template <class... Args> void emplace_back(Args &&... args) {
+        append(value_type(std::forward<Args>(args)...));
+    }
     // empty method for compatibility reason
     void reserve(std::size_t size) {}
 };
