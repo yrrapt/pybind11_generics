@@ -23,8 +23,8 @@ template <Py_ssize_t n> struct set_tuple {
                 // lvalue, incref before setItem steals reference
                 PyTuple_SET_ITEM(tup, n, arg0.inc_ref().ptr());
             } else {
-                // rvalue, just steal reference
-                PyTuple_SET_ITEM(tup, n, arg0.ptr());
+                // rvalue, release (so destructor don't dercrement reference) and steal reference
+                PyTuple_SET_ITEM(tup, n, arg0.release().ptr());
             }
         } else {
             // create temporary object, release (so destructor don't decrement reference),

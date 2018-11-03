@@ -32,12 +32,21 @@ template <typename T> class List : public list_base {
     }
     const_iterator begin() const { return const_iterator(list_base::begin()); }
     const_iterator end() const { return const_iterator(list_base::end()); }
-    void append(value_type &&val) const { list_base::append<value_type>(std::move(val)); }
-    void append(const value_type &val) const { list_base::append<value_type>(val); }
-    void push_back(value_type &&val) { append(std::move(val)); }
-    void push_back(const value_type &val) { append(val); }
+
+    template <class V, std::enable_if_t<
+                           std::is_same_v<value_type, std::remove_cv_t<std::remove_reference_t<V>>>,
+                           int> = 0>
+    void append(V &&val) const {
+        list_base::append(std::forward<V>(val));
+    }
+    template <class V, std::enable_if_t<
+                           std::is_same_v<value_type, std::remove_cv_t<std::remove_reference_t<V>>>,
+                           int> = 0>
+    void push_back(V &&val) {
+        list_base::append(std::forward<V>(val));
+    }
     template <class... Args> void emplace_back(Args &&... args) {
-        append(value_type(std::forward<Args>(args)...));
+        push_back(value_type(std::forward<Args>(args)...));
     }
     // empty method for compatibility reason
     void reserve(std::size_t size) {}
