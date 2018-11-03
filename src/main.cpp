@@ -1,4 +1,5 @@
 
+#include "move_cast.h"
 #include "test_any.h"
 #include "test_dict.h"
 #include "test_iter.h"
@@ -20,4 +21,5 @@ PYBIND11_MODULE(pyg_test, m) {
     bind_test_optional(m);
     bind_test_iter(m);
     bind_test_iterable(m);
+    bind_move_cast(m);
 }
