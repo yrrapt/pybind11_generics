@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Stub generator for C modules.
 
 The public interface is via the mypy.stubgen module.
@@ -7,7 +9,8 @@ import importlib
 import inspect
 import os.path
 import re
-from typing import List, Dict, Tuple, Optional, Mapping, Any, Set
+from typing import List, Tuple, Optional, Mapping, Any, Set
+# noinspection PyUnresolvedReferences
 from types import ModuleType
 
 from .stubutil import (
@@ -18,9 +21,7 @@ from .stubutil import (
 
 def generate_stub_for_c_module(module_name: str,
                                target: str,
-                               add_header: bool = True,
-                               sigs: Dict[str, str] = {},
-                               class_sigs: Dict[str, str] = {},
+                               add_header: bool,
                                ) -> None:
     module = importlib.import_module(module_name)
     assert is_c_module(module), '%s is not a C module' % module_name
@@ -32,14 +33,14 @@ def generate_stub_for_c_module(module_name: str,
     items = sorted(module.__dict__.items(), key=lambda x: x[0])
     for name, obj in items:
         if is_c_function(obj):
-            generate_c_function_stub(module, name, obj, functions, sigs=sigs)
+            generate_c_function_stub(name, obj, functions)
             done.add(name)
     types = []  # type: List[str]
     for name, obj in items:
         if name.startswith('__') and name.endswith('__'):
             continue
         if is_c_type(obj):
-            generate_c_type_stub(module, name, obj, types, sigs=sigs, class_sigs=class_sigs)
+            generate_c_type_stub(name, obj, types)
             done.add(name)
     variables = []
     for name, obj in items:
@@ -107,14 +108,11 @@ def is_c_type(obj: object) -> bool:
     return inspect.isclass(obj) or type(obj) is type(int)
 
 
-def generate_c_function_stub(module: ModuleType,
-                             name: str,
+def generate_c_function_stub(name: str,
                              obj: object,
                              output: List[str],
                              self_var: Optional[str] = None,
-                             sigs: Dict[str, str] = {},
                              class_name: Optional[str] = None,
-                             class_sigs: Dict[str, str] = {},
                              ) -> None:
     ret_type = 'Any'
 
@@ -122,19 +120,16 @@ def generate_c_function_stub(module: ModuleType,
         self_arg = '%s, ' % self_var
     else:
         self_arg = ''
-    if (name in ('__new__', '__init__') and name not in sigs and class_name and
-            class_name in class_sigs):
-        sig = class_sigs[class_name]
+
+    docstr = getattr(obj, '__doc__', None)
+    inferred = infer_sig_from_docstring(docstr, name)
+    if inferred:
+        sig, ret_type = inferred
     else:
-        docstr = getattr(obj, '__doc__', None)
-        inferred = infer_sig_from_docstring(docstr, name)
-        if inferred:
-            sig, ret_type = inferred
+        if class_name:
+            sig = infer_method_sig(name)
         else:
-            if class_name and name not in sigs:
-                sig = infer_method_sig(name)
-            else:
-                sig = sigs.get(name, '(*args, **kwargs)')
+            sig = '(*args, **kwargs)'
     # strip away parenthesis
     sig = sig[1:-1]
     if sig:
@@ -162,12 +157,9 @@ def generate_c_property_stub(name: str, obj: object, output: List[str], readonly
         output.append('def {}(self, val: {}) -> None: ...'.format(name, inferred))
 
 
-def generate_c_type_stub(module: ModuleType,
-                         class_name: str,
+def generate_c_type_stub(class_name: str,
                          obj: type,
                          output: List[str],
-                         sigs: Dict[str, str] = {},
-                         class_sigs: Dict[str, str] = {},
                          ) -> None:
     # typeshed gives obj.__dict__ the not quite correct type Dict[str, Any]
     # (it could be a mappingproxy!), which makes mypyc mad, so obfuscate it.
@@ -193,8 +185,8 @@ def generate_c_type_stub(module: ModuleType,
                         # better signature than __init__() ?
                         continue
                     attr = '__init__'
-                generate_c_function_stub(module, attr, value, methods, self_var, sigs=sigs,
-                                         class_name=class_name, class_sigs=class_sigs)
+                generate_c_function_stub(attr, value, methods, self_var,
+                                         class_name=class_name)
         elif is_c_property(value):
             done.add(attr)
             generate_c_property_stub(attr, value, properties, is_c_property_readonly(value))
@@ -234,10 +226,10 @@ def generate_c_type_stub(module: ModuleType,
 
 def method_name_sort_key(name: str) -> Tuple[int, str]:
     if name in ('__new__', '__init__'):
-        return (0, name)
+        return 0, name
     if name.startswith('__') and name.endswith('__'):
-        return (2, name)
-    return (1, name)
+        return 2, name
+    return 1, name
 
 
 def is_skipped_attribute(attr: str) -> bool:

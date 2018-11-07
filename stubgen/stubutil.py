@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import re
 import sys
 import os
 
 from typing import Optional, Tuple, Sequence, MutableSequence, List, MutableMapping, IO
+# noinspection PyUnresolvedReferences
 from types import ModuleType
-
 
 # Type Alias for Signatures
 Sig = Tuple[str, str]
@@ -20,7 +22,7 @@ def parse_signature(sig: str) -> Optional[Tuple[str,
     name = name.split('.')[-1]
     arg_string = m.group(2)
     if not arg_string.strip():
-        return (name, [], [])
+        return name, [], []
     args = [arg.strip() for arg in arg_string.split(',')]
     fixed = []
     optional = []
@@ -38,7 +40,7 @@ def parse_signature(sig: str) -> Optional[Tuple[str,
         arg = arg.split('=')[0]
         optional.append(arg)
         i += 1
-    return (name, fixed, optional)
+    return name, fixed, optional
 
 
 def build_signature(fixed: Sequence[str],
