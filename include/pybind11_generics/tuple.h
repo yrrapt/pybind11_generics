@@ -61,7 +61,7 @@ template <typename... T> class Tuple : public tuple_base {
         return cast_from_handle<std::tuple_element_t<I, std::tuple<T...>>>(py::handle(result));
     }
 
-    friend Tuple make_tuple(T &&... args) {
+    static Tuple make_tuple(T &&... args) {
         PyObject *result = PyTuple_New((Py_ssize_t)sizeof...(T));
         detail::set_tuple<0>{}(result, args...);
 
