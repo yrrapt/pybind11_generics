@@ -18,6 +18,11 @@ from .stubutil import (
     infer_prop_type_from_docstring
 )
 
+# list of classes we need to import from typing package if present
+typing_imports = ['Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 'Iterable', 'Iterator']
+# list of base class names to ignore
+skip_base_names = ['pybind11_object', 'object']
+
 
 def generate_stub_for_c_module(module_name: str,
                                target: str,
@@ -33,14 +38,14 @@ def generate_stub_for_c_module(module_name: str,
     items = sorted(module.__dict__.items(), key=lambda x: x[0])
     for name, obj in items:
         if is_c_function(obj):
-            generate_c_function_stub(name, obj, functions)
+            generate_c_function_stub(module_name, name, obj, functions)
             done.add(name)
     types = []  # type: List[str]
     for name, obj in items:
         if name.startswith('__') and name.endswith('__'):
             continue
         if is_c_type(obj):
-            generate_c_type_stub(name, obj, types)
+            generate_c_type_stub(module_name, name, obj, types)
             done.add(name)
     variables = []
     for name, obj in items:
@@ -72,7 +77,9 @@ def generate_stub_for_c_module(module_name: str,
 
 def add_typing_import(output: List[str]) -> List[str]:
     names = []
-    for name in ['Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict']:
+    # These names include generic types from pybind11_generics, and also
+    # types supported by pybind11
+    for name in typing_imports:
         if any(re.search(r'\b%s\b' % name, line) for line in output):
             names.append(name)
     if names:
@@ -108,7 +115,8 @@ def is_c_type(obj: object) -> bool:
     return inspect.isclass(obj) or type(obj) is type(int)
 
 
-def generate_c_function_stub(name: str,
+def generate_c_function_stub(module_name: str,
+                             name: str,
                              obj: object,
                              output: List[str],
                              self_var: Optional[str] = None,
@@ -141,14 +149,22 @@ def generate_c_function_stub(name: str,
                 sig = '{},{}'.format(self_var, groups[1]) if len(groups) > 1 else self_var
     else:
         self_arg = self_arg.replace(', ', '')
-    output.append('def %s(%s%s) -> %s: ...' % (name, self_arg, sig, ret_type))
+
+    ans = 'def %s(%s%s) -> %s: ...' % (name, self_arg, sig, ret_type)
+    # remove module prefix on class names
+    ans = ans.replace(module_name + '.', '')
+    output.append(ans)
 
 
-def generate_c_property_stub(name: str, obj: object, output: List[str], readonly: bool) -> None:
+def generate_c_property_stub(module_name: str, name: str, obj: object, output: List[str],
+                             readonly: bool) -> None:
     docstr = getattr(obj, '__doc__', None)
     inferred = infer_prop_type_from_docstring(docstr)
     if not inferred:
         inferred = 'Any'
+    else:
+        # remove module prefix on class names
+        inferred = inferred.replace(module_name + '.', '')
 
     output.append('@property')
     output.append('def {}(self) -> {}: ...'.format(name, inferred))
@@ -157,7 +173,8 @@ def generate_c_property_stub(name: str, obj: object, output: List[str], readonly
         output.append('def {}(self, val: {}) -> None: ...'.format(name, inferred))
 
 
-def generate_c_type_stub(class_name: str,
+def generate_c_type_stub(module_name: str,
+                         class_name: str,
                          obj: type,
                          output: List[str],
                          ) -> None:
@@ -185,11 +202,12 @@ def generate_c_type_stub(class_name: str,
                         # better signature than __init__() ?
                         continue
                     attr = '__init__'
-                generate_c_function_stub(attr, value, methods, self_var,
+                generate_c_function_stub(module_name, attr, value, methods, self_var,
                                          class_name=class_name)
         elif is_c_property(value):
             done.add(attr)
-            generate_c_property_stub(attr, value, properties, is_c_property_readonly(value))
+            generate_c_property_stub(module_name, attr, value, properties,
+                                     is_c_property_readonly(value))
 
     variables = []
     for attr, value in items:
@@ -198,15 +216,12 @@ def generate_c_type_stub(class_name: str,
         if attr not in done:
             variables.append('%s: Any = ...' % attr)
     all_bases = obj.mro()
-    if all_bases[-1] is object:
-        # TODO: Is this always object?
-        del all_bases[-1]
     # remove the class itself
     all_bases = all_bases[1:]
     # Remove base classes of other bases as redundant.
     bases = []  # type: List[type]
     for base in all_bases:
-        if not any(issubclass(b, base) for b in bases):
+        if base.__name__ not in skip_base_names and not any(issubclass(b, base) for b in bases):
             bases.append(base)
     if bases:
         bases_str = '(%s)' % ', '.join(base.__name__ for base in bases)

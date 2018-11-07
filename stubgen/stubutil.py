@@ -94,14 +94,11 @@ def is_c_module(module: ModuleType) -> bool:
             os.path.splitext(module.__dict__['__file__'])[-1] in ['.so', '.pyd'])
 
 
-def write_header(file: IO[str], module_name: Optional[str] = None,
-                 pyversion: Tuple[int, int] = (3, 5)) -> None:
+def write_header(file: IO[str], module_name: Optional[str]) -> None:
+    file.write('# -*- coding: utf-8 -*-\n')
     if module_name:
-        if pyversion[0] >= 3:
-            version = '%d.%d' % (sys.version_info.major,
-                                 sys.version_info.minor)
-        else:
-            version = '2'
+        version = '%d.%d' % (sys.version_info.major,
+                             sys.version_info.minor)
         file.write('# Stubs for %s (Python %s)\n' % (module_name, version))
     file.write(
         '#\n'
