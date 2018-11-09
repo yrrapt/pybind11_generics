@@ -15,12 +15,10 @@ import sys
 import inspect
 import importlib
 
-# list of classes we need to import from typing package if present
-typing_imports = ('Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 'Iterable', 'Iterator')
+from .parsedoc import get_prop_type
+
 # list of base class names to ignore
 skip_base_names = ('pybind11_object', 'object')
-# list of supported variable types
-base_var_types = ('int', 'str', 'bytes', 'float', 'bool')
 # list of attributes to not generate stubs for
 skip_attrs = ('__getattribute__',
               '__str__',
@@ -61,7 +59,9 @@ def generate_stub_for_c_module(module_name: str,
 
         if imports:
             for c_name, m_name in sorted(imports.items(), key=lambda x: x[1]):
-                file.write('from {} import {}\n'.format(m_name, c_name))
+                if m_name != module_name:
+                    # a class in a different module, write import statement
+                    file.write('from {} import {}\n'.format(m_name, c_name))
             file.write('\n')
         if variables:
             for line in variables:
@@ -87,15 +87,18 @@ def generate_stub_for_c_module(module_name: str,
             file.write('\n')
 
 
-def process_c_var(name: str, obj: object, output: List[str], imports: Dict[str, str]) -> bool:
-    if (name.startswith('__') and name.endswith('__')) or inspect.ismodule(obj):
+def process_c_var(name: str,
+                  obj: object,
+                  output: List[str],
+                  imports: Dict[str, str],
+                  check: bool = True,
+                  ) -> bool:
+    if check and ((name.startswith('__') and name.endswith('__')) or inspect.ismodule(obj)):
         return False
 
-    type_str = type(obj).__name__
-    if type_str not in base_var_types:
-        type_str = 'Any'
-        imports['Any'] = 'typing'
-    output.append('{}: {}'.format(name, type_str))
+    type_obj = type(obj)
+    imports[type_obj.__name__] = type_obj.__module__
+    output.append('{}: {} = ...'.format(name, type_obj.__name__))
     return True
 
 
@@ -172,8 +175,7 @@ def process_c_type(module_name: str,
         elif process_c_property(mem_name, mem_obj, properties, imports):
             pass
         else:
-            imports['Any'] = 'typing'
-            variables.append(mem_name + ': Any = ...')
+            process_c_var(mem_name, mem_obj, variables, imports, check=False)
 
     # determine the base class
     all_bases = obj.mro()
@@ -232,19 +234,7 @@ def process_c_property(name: str,
 
     readonly = is_c_property_readonly(obj)
 
-    # check for Google/Numpy style docstring type annotation
-    # the docstring has the format "<type>: <descriptions>"
-    # in the type string, we allow the following characters
-    # dot: because something classes are annotated using full path,
-    # brackets: to allow type hints like List[int]
-    # comma/space: things like Tuple[int, int]
-    test_str = r'^([a-zA-Z0-9_, \.\[\]]*): '
-    m = re.match(test_str, getattr(obj, '__doc__', ''))
-    if m:
-        prop_type = m.group(1)
-    else:
-        imports['Any'] = 'typing'
-        prop_type = 'Any'
+    prop_type = get_prop_type(getattr(obj, '__doc__', ''), imports)
 
     output.append('@property')
     output.append('def {}(self) -> {}: ...'.format(name, prop_type))
@@ -253,26 +243,6 @@ def process_c_property(name: str,
         output.append('def {}(self, val: {}) -> None: ...'.format(name, prop_type))
 
     return True
-
-
-def check_builtin_sig(name: str,
-                      cls_name: str,
-                      self_var: str,
-                      output: List[str],
-                      ) -> bool:
-    if name in ('int', 'float', 'complex', 'bool'):
-        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, name))
-        return True
-    if name in ('hash', 'sizeof', 'trunc', 'floor', 'ceil'):
-        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, 'int'))
-        return True
-    if name in ('copy', 'deepcopy'):
-        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, cls_name))
-        return True
-    if name == 'delattr':
-        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, 'None'))
-        return True
-    return False
 
 
 def is_c_function(obj: object) -> bool:
@@ -308,11 +278,31 @@ def is_c_module(module: ModuleType) -> bool:
 
 
 def method_name_sort_key(name: str) -> Tuple[int, str]:
-    if name in ('__new__', '__init__'):
+    if name == '__init__':
         return 0, name
     if name.startswith('__') and name.endswith('__'):
         return 1, name
     return 2, name
+
+
+def check_builtin_sig(name: str,
+                      cls_name: str,
+                      self_var: str,
+                      output: List[str],
+                      ) -> bool:
+    if name in ('int', 'float', 'complex', 'bool'):
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, name))
+        return True
+    if name in ('hash', 'sizeof', 'trunc', 'floor', 'ceil'):
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, 'int'))
+        return True
+    if name in ('copy', 'deepcopy'):
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, cls_name))
+        return True
+    if name == 'delattr':
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, 'None'))
+        return True
+    return False
 
 
 def write_header(file: IO[str], module_name: Optional[str]) -> None:
