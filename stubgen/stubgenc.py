@@ -43,7 +43,7 @@ def generate_stub_for_c_module(module_name: str,
 
     # parse all members of this module
     imports = {}  # type: Dict[str, str]
-    types = []  # type: List[str]
+    types = []  # type: List[List[str]]
     variables = []  # type: List[str]
     functions = []  # type: List[str]
     for name, obj in sorted(module.__dict__.items(), key=lambda x: x[0]):
@@ -69,6 +69,11 @@ def generate_stub_for_c_module(module_name: str,
                 file.write('\n')
             file.write('\n')
             file.write('\n')
+        else:
+            # if no variables section, add extra blank line so import/variable
+            # section is 2 spaces from class/function section
+            file.write('\n')
+
         for line in functions:
             file.write(line)
             file.write('\n')
@@ -101,8 +106,9 @@ def process_c_function(module_name: str,
                        imports: Dict[str, str],
                        self_var: Optional[str] = None,
                        class_name: Optional[str] = None,
+                       check: bool = True,
                        ) -> bool:
-    if not is_c_function(obj):
+    if check and not is_c_function(obj):
         return False
 
     docstr = getattr(obj, '__doc__', '')
@@ -144,7 +150,7 @@ def process_c_function(module_name: str,
 def process_c_type(module_name: str,
                    class_name: str,
                    obj: type,
-                   output: List[str],
+                   output: List[List[str]],
                    imports: Dict[str, str],
                    ) -> bool:
     if (class_name.startswith('__') and class_name.endswith('__')) or not is_c_type(obj):
@@ -184,12 +190,13 @@ def process_c_type(module_name: str,
         bases_str = ''
 
     if not methods and not variables and not properties:
-        output.append('class {}{}: ...'.format(class_name, bases_str))
+        output.append(['class {}{}: ...'.format(class_name, bases_str)])
     else:
-        output.append('class {}{}:'.format(class_name, bases_str))
-        output.extend(('    {}'.format(line) for line in variables))
-        output.extend(('    {}'.format(line) for line in properties))
-        output.extend(('    {}'.format(line) for line in methods))
+        cls_lines = ['class {}{}:'.format(class_name, bases_str)]
+        cls_lines.extend(('    {}'.format(line) for line in variables))
+        cls_lines.extend(('    {}'.format(line) for line in properties))
+        cls_lines.extend(('    {}'.format(line) for line in methods))
+        output.append(cls_lines)
 
     return True
 
@@ -212,7 +219,7 @@ def process_c_method(module_name: str,
         self_var = 'self'
 
     return process_c_function(module_name, name, obj, output, imports, self_var=self_var,
-                              class_name=class_name)
+                              class_name=class_name, check=False)
 
 
 def process_c_property(name: str,
@@ -304,8 +311,8 @@ def method_name_sort_key(name: str) -> Tuple[int, str]:
     if name in ('__new__', '__init__'):
         return 0, name
     if name.startswith('__') and name.endswith('__'):
-        return 2, name
-    return 1, name
+        return 1, name
+    return 2, name
 
 
 def write_header(file: IO[str], module_name: Optional[str]) -> None:
