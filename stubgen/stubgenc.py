@@ -175,13 +175,13 @@ def process_c_method(name: str,
                      imports: Dict[str, str],
                      cls_name: str,
                      ) -> bool:
-    is_cls_method = is_c_classmethod(obj)
-    if not is_c_method(obj) and not is_cls_method:
+    is_static = is_c_staticmethod(obj)
+    if not is_c_method(obj) and not is_static:
         return False
 
-    if is_cls_method:
-        output.append('@classmethod')
-        self_var = 'cls'
+    if is_static:
+        output.append('@staticmethod')
+        self_var = None
     else:
         self_var = 'self'
 
@@ -220,9 +220,8 @@ def is_c_method(obj: object) -> bool:
                                                             type(str.__new__))
 
 
-def is_c_classmethod(obj: object) -> bool:
-    return inspect.isbuiltin(obj) or type(obj).__name__ in ('classmethod',
-                                                            'classmethod_descriptor')
+def is_c_staticmethod(obj: object) -> bool:
+    return inspect.isbuiltin(obj)
 
 
 def is_c_property(obj: object) -> bool:
