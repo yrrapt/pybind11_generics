@@ -22,11 +22,11 @@ class PkgClsParser(ast.NodeVisitor):
 
     # noinspection PyPep8Naming
     def visit_Attribute(self, node: ast.Attribute) -> None:
-        if not self.class_name:
-            self.class_name = node.attr
-        else:
+        if self.class_name:
             self._modules.append(node.attr)
-        self.generic_visit(node)
+        else:
+            self.class_name = node.attr
+        self.visit(node.value)
 
     # noinspection PyPep8Naming
     def visit_Name(self, node: ast.Name) -> None:
@@ -42,6 +42,18 @@ class ImportsParser(ast.NodeVisitor):
         ast.NodeVisitor.__init__(self)
 
         self._imports = imports
+        self.replacements = {}
+
+    # noinspection PyPep8Naming
+    def visit_Str(self, node: ast.Str) -> None:
+        """This method is here because type annotation could be string"""
+        try:
+            # try to parse the type annotation string with ast
+            body = ast.parse(node.s).body
+            if body:
+                self.visit(body[0])
+        except SyntaxError:
+            pass
 
     # noinspection PyPep8Naming
     def visit_Name(self, node: ast.Name) -> None:
@@ -52,7 +64,46 @@ class ImportsParser(ast.NodeVisitor):
     def visit_Attribute(self, node: ast.Attribute) -> None:
         pkg_cls_parser = PkgClsParser()
         pkg_cls_parser.visit(node)
-        self._imports[pkg_cls_parser.class_name] = pkg_cls_parser.package_name
+        pkg_name = pkg_cls_parser.package_name
+        cls_name = pkg_cls_parser.class_name
+        self._imports[cls_name] = pkg_name
+        self.replacements[pkg_name + '.' + cls_name] = cls_name
+
+    # noinspection PyPep8Naming
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        # only visit arguments and return type annotation since we just want
+        # to get the names/attributes in type annotations
+        if node.args is not None:
+            self.generic_visit(node.args)
+        if node.returns is not None:
+            self.visit(node.returns)
+
+    def visit_arguments(self, node: ast.arguments) -> None:
+        # only visit arguments and not default values
+        if node.args is not None:
+            self.generic_visit(node.args)
+        if node.vararg is not None:
+            self.visit(node.vararg)
+        if node.kwonlyargs is not None:
+            self.generic_visit(node.kwonlyargs)
+        if node.kwarg is not None:
+            self.visit(node.kwarg)
+
+    def visit_arg(self, node: ast.arg) -> None:
+        # only visit type annotation
+        if node.annotation is not None:
+            self.visit(node.annotation)
+
+
+def process_ast_node(orig_str: str, node: ast.AST, imports: Dict[str, str]) -> str:
+    # record all imports
+    imp_parser = ImportsParser(imports)
+    imp_parser.visit(node)
+
+    # remove package name from full path class name
+    for from_str, to_str in imp_parser.replacements.items():
+        orig_str = orig_str.replace(from_str, to_str)
+    return orig_str
 
 
 def get_prop_type(docstr: str, imports: Dict[str, str]) -> str:
@@ -87,8 +138,7 @@ def get_prop_type(docstr: str, imports: Dict[str, str]) -> str:
         type_body = ast.parse(type_str).body
         if type_body:
             # parse successful and found content, record all imports
-            ImportsParser(imports).visit(type_body[0])
-            return type_str
+            return process_ast_node(type_str, type_body[0], imports)
     except SyntaxError:
         # parsing failed; fallback to default return value
         pass
@@ -107,6 +157,8 @@ def get_function_stub(name: str,
 
     try:
         func_node = ast.parse(declaration).body[0]
+        # parse successful and found content, record all imports
+        return process_ast_node(declaration, func_node, imports)
     except SyntaxError:
         pass
 
