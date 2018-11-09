@@ -2,7 +2,7 @@
 
 """This module handles parsing type hinting information from pybind11 docstrings."""
 
-from typing import Dict
+from typing import Dict, Optional
 
 import ast
 
@@ -81,7 +81,7 @@ def get_prop_type(docstr: str, imports: Dict[str, str]) -> str:
     # extract the type string from docstring
     # get just the first line, then get the expression to the left of the colon, then
     # remove white spaces
-    type_str = docstr.split('\n', 1)[0].strip().rsplit(':', 1)[0].strip()
+    type_str = docstr.split('\n', 1)[0].rsplit(':', 1)[0].strip()
 
     try:
         type_body = ast.parse(type_str).body
@@ -95,3 +95,43 @@ def get_prop_type(docstr: str, imports: Dict[str, str]) -> str:
 
     imports['Any'] = 'typing'
     return 'Any'
+
+
+def get_function_stub(name: str,
+                      docstr: str,
+                      self_var: Optional[str],
+                      cls_name: Optional[str],
+                      imports: Dict[str, str],
+                      ) -> str:
+    declaration = 'def {}: ...'.format(docstr.split('\n', 1)[0].strip())
+
+    try:
+        func_node = ast.parse(declaration).body[0]
+    except SyntaxError:
+        pass
+
+    # failed to get function stub, try to check for builtin method signature
+    if self_var is not None and name.startswith('__') and name.endswith('__'):
+        # check if this is a builtin method for a class
+        test = check_builtin_sig(name[2:-2], cls_name, self_var)
+        if test:
+            return test
+
+    imports['Any'] = 'typing'
+    self_arg = self_var + ', ' if self_var else ''
+    return 'def {}({}*args: Any, **kwargs: Any) -> Any: ...'.format(name, self_arg)
+
+
+def check_builtin_sig(name: str,
+                      cls_name: str,
+                      self_var: str,
+                      ) -> str:
+    if name in ('int', 'float', 'complex', 'bool'):
+        return 'def __{}__({}) -> {}: ...'.format(name, self_var, name)
+    if name in ('hash', 'sizeof', 'trunc', 'floor', 'ceil'):
+        return 'def __{}__({}) -> {}: ...'.format(name, self_var, 'int')
+    if name in ('copy', 'deepcopy'):
+        return 'def __{}__({}) -> {}: ...'.format(name, self_var, cls_name)
+    if name == 'delattr':
+        return 'def __{}__({}) -> {}: ...'.format(name, self_var, 'None')
+    return ''
