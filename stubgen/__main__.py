@@ -11,8 +11,7 @@ import pkgutil
 import argparse
 import importlib
 
-from .stubgenc import generate_stub_for_c_module
-from .stubutil import is_c_module
+from .stubgenc import generate_stub_for_c_module, is_c_module
 
 out_dir_default = 'out'
 

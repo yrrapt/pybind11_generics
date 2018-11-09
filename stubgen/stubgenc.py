@@ -5,23 +5,32 @@
 The public interface is via the mypy.stubgen module.
 """
 
-import importlib
-import inspect
-import os.path
-import re
-from typing import List, Tuple, Optional, Mapping, Any, Set
+from typing import List, Tuple, Optional, Mapping, Any, Dict, IO
 # noinspection PyUnresolvedReferences
 from types import ModuleType
 
-from .stubutil import (
-    is_c_module, write_header, infer_sig_from_docstring,
-    infer_prop_type_from_docstring
-)
+import os
+import re
+import sys
+import inspect
+import importlib
 
 # list of classes we need to import from typing package if present
-typing_imports = ['Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 'Iterable', 'Iterator']
+typing_imports = ('Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 'Iterable', 'Iterator')
 # list of base class names to ignore
-skip_base_names = ['pybind11_object', 'object']
+skip_base_names = ('pybind11_object', 'object')
+# list of supported variable types
+base_var_types = ('int', 'str', 'bytes', 'float', 'bool')
+# list of attributes to not generate stubs for
+skip_attrs = ('__getattribute__',
+              '__str__',
+              '__repr__',
+              '__doc__',
+              '__dict__',
+              '__module__',
+              '__new__',
+              '__weakref__',
+              )
 
 
 def generate_stub_for_c_module(module_name: str,
@@ -30,62 +39,233 @@ def generate_stub_for_c_module(module_name: str,
                                ) -> None:
     module = importlib.import_module(module_name)
     assert is_c_module(module), '%s is not a C module' % module_name
-    subdir = os.path.dirname(target)
-    if subdir and not os.path.isdir(subdir):
-        os.makedirs(subdir)
-    functions = []  # type: List[str]
-    done = set()
-    items = sorted(module.__dict__.items(), key=lambda x: x[0])
-    for name, obj in items:
-        if is_c_function(obj):
-            generate_c_function_stub(module_name, name, obj, functions)
-            done.add(name)
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+
+    # parse all members of this module
+    imports = {}  # type: Dict[str, str]
     types = []  # type: List[str]
-    for name, obj in items:
-        if name.startswith('__') and name.endswith('__'):
-            continue
-        if is_c_type(obj):
-            generate_c_type_stub(module_name, name, obj, types)
-            done.add(name)
-    variables = []
-    for name, obj in items:
-        if name.startswith('__') and name.endswith('__'):
-            continue
-        if name not in done and not inspect.ismodule(obj):
-            type_str = type(obj).__name__
-            if type_str not in ('int', 'str', 'bytes', 'float', 'bool'):
-                type_str = 'Any'
-            variables.append('%s: %s' % (name, type_str))
-    output = []
-    for line in variables:
-        output.append(line)
-    if output and functions:
-        output.append('')
-    for line in functions:
-        output.append(line)
-    for line in types:
-        if line.startswith('class') and output and output[-1]:
-            output.append('')
-        output.append(line)
-    output = add_typing_import(output)
+    variables = []  # type: List[str]
+    functions = []  # type: List[str]
+    for name, obj in sorted(module.__dict__.items(), key=lambda x: x[0]):
+        if process_c_function(module_name, name, obj, functions, imports):
+            pass
+        elif process_c_type(module_name, name, obj, types, imports):
+            pass
+        else:
+            process_c_var(name, obj, variables, imports)
+
+    # write output to file
     with open(target, 'w') as file:
         if add_header:
             write_header(file, module_name)
-        for line in output:
-            file.write('%s\n' % line)
+
+        if imports:
+            for c_name, m_name in sorted(imports.items(), key=lambda x: x[1]):
+                file.write('from {} import {}\n'.format(m_name, c_name))
+            file.write('\n')
+        if variables:
+            for line in variables:
+                file.write(line)
+                file.write('\n')
+            file.write('\n')
+            file.write('\n')
+        for line in functions:
+            file.write(line)
+            file.write('\n')
+            file.write('\n')
+            file.write('\n')
+        for cls_lines in types:
+            for line in cls_lines:
+                file.write(line)
+                file.write('\n')
+            file.write('\n')
+            file.write('\n')
 
 
-def add_typing_import(output: List[str]) -> List[str]:
-    names = []
-    # These names include generic types from pybind11_generics, and also
-    # types supported by pybind11
-    for name in typing_imports:
-        if any(re.search(r'\b%s\b' % name, line) for line in output):
-            names.append(name)
-    if names:
-        return ['from typing import %s' % ', '.join(names), ''] + output
+def process_c_var(name: str, obj: object, output: List[str], imports: Dict[str, str]) -> bool:
+    if (name.startswith('__') and name.endswith('__')) or inspect.ismodule(obj):
+        return False
+
+    type_str = type(obj).__name__
+    if type_str not in base_var_types:
+        type_str = 'Any'
+        imports['Any'] = 'typing'
+    output.append('{}: {}'.format(name, type_str))
+    return True
+
+
+def process_c_function(module_name: str,
+                       name: str,
+                       obj: object,
+                       output: List[str],
+                       imports: Dict[str, str],
+                       self_var: Optional[str] = None,
+                       class_name: Optional[str] = None,
+                       ) -> bool:
+    if not is_c_function(obj):
+        return False
+
+    docstr = getattr(obj, '__doc__', '')
+    if docstr:
+        # get signature from docstring
+        docstr = docstr.lstrip()
+        # look for function signature, which is any string of the format
+        # <function_name>(<signature>) -> <return type>
+        # or perhaps without the return type
+
+        # in the signature, we allow the following characters:
+        # colon/equal: to match default values, like "a: int=1"
+        # comma/space/brackets: for type hints like "a: Tuple[int, float]"
+        # dot: for classes annotating using full path, like "a: foo.bar.baz"
+        # to capture return type,
+        sig_str = r'\([a-zA-Z0-9_=:, \[\]\.]*\)'
+        sig_match = r'({}{} -> [a-zA-Z].*)$'.format(name, sig_str)
+        # first, try to capture return type; we just match until end of line
+        m = re.match(sig_match, docstr, re.MULTILINE)
+        if m:
+            # strip potential white spaces at the right of return type
+            # remove module prefix on class names
+            sig = m.group(1).rstrip().replace(module_name + '.', '')
+            output.append('def {}: ...'.format(sig))
+            return True
+    elif self_var is not None and name.startswith('__') and name.endswith('__'):
+        # check if this is a builtin method for a class
+        test = name[2:-2]
+        if check_builtin_sig(test, class_name, self_var, output):
+            return True
+
+    # cannot detect signature, use a catch all definition
+    imports['Any'] = 'typing'
+    self_arg = self_var + ', ' if self_var else ''
+    output.append('def {}({}*args: Any, **kwargs: Any) -> Any: ...'.format(name, self_arg))
+    return True
+
+
+def process_c_type(module_name: str,
+                   class_name: str,
+                   obj: type,
+                   output: List[str],
+                   imports: Dict[str, str],
+                   ) -> bool:
+    if (class_name.startswith('__') and class_name.endswith('__')) or not is_c_type(obj):
+        return False
+
+    # typeshed gives obj.__dict__ the not quite correct type Dict[str, Any]
+    # (it could be a mappingproxy!), which makes mypyc mad, so obfuscate it.
+    obj_dict = getattr(obj, '__dict__')  # type: Mapping[str, Any]
+
+    # parse all members of this class
+    methods = []  # type: List[str]
+    variables = []  # type: List[str]
+    properties = []  # type: List[str]
+    for mem_name, mem_obj in sorted(obj_dict.items(), key=lambda x: method_name_sort_key(x[0])):
+        if mem_name in skip_attrs:
+            pass
+        elif process_c_method(module_name, mem_name, mem_obj, methods, imports, class_name):
+            pass
+        elif process_c_property(mem_name, mem_obj, properties, imports):
+            pass
+        else:
+            imports['Any'] = 'typing'
+            variables.append(mem_name + ': Any = ...')
+
+    # determine the base class
+    all_bases = obj.mro()
+    # remove the class itself
+    all_bases = all_bases[1:]
+    # Remove base classes of other bases as redundant.
+    bases = []  # type: List[type]
+    for base in all_bases:
+        if base.__name__ not in skip_base_names and not any(issubclass(b, base) for b in bases):
+            bases.append(base)
+    if bases:
+        bases_str = '({})'.format(', '.join(base.__name__ for base in bases))
     else:
-        return output[:]
+        bases_str = ''
+
+    if not methods and not variables and not properties:
+        output.append('class {}{}: ...'.format(class_name, bases_str))
+    else:
+        output.append('class {}{}:'.format(class_name, bases_str))
+        output.extend(('    {}'.format(line) for line in variables))
+        output.extend(('    {}'.format(line) for line in properties))
+        output.extend(('    {}'.format(line) for line in methods))
+
+    return True
+
+
+def process_c_method(module_name: str,
+                     name: str,
+                     obj: object,
+                     output: List[str],
+                     imports: Dict[str, str],
+                     class_name: str,
+                     ) -> bool:
+    is_cls_method = is_c_classmethod(obj)
+    if not is_c_method(obj) and not is_cls_method:
+        return False
+
+    if is_cls_method:
+        output.append('@classmethod')
+        self_var = 'cls'
+    else:
+        self_var = 'self'
+
+    return process_c_function(module_name, name, obj, output, imports, self_var=self_var,
+                              class_name=class_name)
+
+
+def process_c_property(name: str,
+                       obj: object,
+                       output: List[str],
+                       imports: Dict[str, str],
+                       ) -> bool:
+    if not is_c_property(obj):
+        return False
+
+    readonly = is_c_property_readonly(obj)
+
+    # check for Google/Numpy style docstring type annotation
+    # the docstring has the format "<type>: <descriptions>"
+    # in the type string, we allow the following characters
+    # dot: because something classes are annotated using full path,
+    # brackets: to allow type hints like List[int]
+    # comma/space: things like Tuple[int, int]
+    test_str = r'^([a-zA-Z0-9_, \.\[\]]*): '
+    m = re.match(test_str, getattr(obj, '__doc__', ''))
+    if m:
+        prop_type = m.group(1)
+    else:
+        imports['Any'] = 'typing'
+        prop_type = 'Any'
+
+    output.append('@property')
+    output.append('def {}(self) -> {}: ...'.format(name, prop_type))
+    if not readonly:
+        output.append('@{}.setter'.format(name))
+        output.append('def {}(self, val: {}) -> None: ...'.format(name, prop_type))
+
+    return True
+
+
+def check_builtin_sig(name: str,
+                      cls_name: str,
+                      self_var: str,
+                      output: List[str],
+                      ) -> bool:
+    if name in ('int', 'float', 'complex', 'bool'):
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, name))
+        return True
+    if name in ('hash', 'sizeof', 'trunc', 'floor', 'ceil'):
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, 'int'))
+        return True
+    if name in ('copy', 'deepcopy'):
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, cls_name))
+        return True
+    if name == 'delattr':
+        output.append('def __{}__({}) -> {}: ...'.format(name, self_var, 'None'))
+        return True
+    return False
 
 
 def is_c_function(obj: object) -> bool:
@@ -115,128 +295,9 @@ def is_c_type(obj: object) -> bool:
     return inspect.isclass(obj) or type(obj) is type(int)
 
 
-def generate_c_function_stub(module_name: str,
-                             name: str,
-                             obj: object,
-                             output: List[str],
-                             self_var: Optional[str] = None,
-                             class_name: Optional[str] = None,
-                             ) -> None:
-    ret_type = 'Any'
-
-    if self_var:
-        self_arg = '%s, ' % self_var
-    else:
-        self_arg = ''
-
-    docstr = getattr(obj, '__doc__', None)
-    inferred = infer_sig_from_docstring(docstr, name)
-    if inferred:
-        sig, ret_type = inferred
-    else:
-        if class_name:
-            sig = infer_method_sig(name)
-        else:
-            sig = '(*args, **kwargs)'
-    # strip away parenthesis
-    sig = sig[1:-1]
-    if sig:
-        if self_var:
-            # remove annotation on self from signature if present
-            groups = sig.split(',', 1)
-            if groups[0] == self_var or groups[0].startswith(self_var + ':'):
-                self_arg = ''
-                sig = '{},{}'.format(self_var, groups[1]) if len(groups) > 1 else self_var
-    else:
-        self_arg = self_arg.replace(', ', '')
-
-    ans = 'def %s(%s%s) -> %s: ...' % (name, self_arg, sig, ret_type)
-    # remove module prefix on class names
-    ans = ans.replace(module_name + '.', '')
-    output.append(ans)
-
-
-def generate_c_property_stub(module_name: str, name: str, obj: object, output: List[str],
-                             readonly: bool) -> None:
-    docstr = getattr(obj, '__doc__', None)
-    inferred = infer_prop_type_from_docstring(docstr)
-    if not inferred:
-        inferred = 'Any'
-    else:
-        # remove module prefix on class names
-        inferred = inferred.replace(module_name + '.', '')
-
-    output.append('@property')
-    output.append('def {}(self) -> {}: ...'.format(name, inferred))
-    if not readonly:
-        output.append('@{}.setter'.format(name))
-        output.append('def {}(self, val: {}) -> None: ...'.format(name, inferred))
-
-
-def generate_c_type_stub(module_name: str,
-                         class_name: str,
-                         obj: type,
-                         output: List[str],
-                         ) -> None:
-    # typeshed gives obj.__dict__ the not quite correct type Dict[str, Any]
-    # (it could be a mappingproxy!), which makes mypyc mad, so obfuscate it.
-    obj_dict = getattr(obj, '__dict__')  # type: Mapping[str, Any]
-    items = sorted(obj_dict.items(), key=lambda x: method_name_sort_key(x[0]))
-    methods = []  # type: List[str]
-    properties = []  # type: List[str]
-    done = set()  # type: Set[str]
-    for attr, value in items:
-        if is_c_method(value) or is_c_classmethod(value):
-            done.add(attr)
-            if not is_skipped_attribute(attr):
-                if is_c_classmethod(value):
-                    methods.append('@classmethod')
-                    self_var = 'cls'
-                else:
-                    self_var = 'self'
-                if attr == '__new__':
-                    # TODO: We should support __new__.
-                    if '__init__' in obj_dict:
-                        # Avoid duplicate functions if both are present.
-                        # But is there any case where .__new__() has a
-                        # better signature than __init__() ?
-                        continue
-                    attr = '__init__'
-                generate_c_function_stub(module_name, attr, value, methods, self_var,
-                                         class_name=class_name)
-        elif is_c_property(value):
-            done.add(attr)
-            generate_c_property_stub(module_name, attr, value, properties,
-                                     is_c_property_readonly(value))
-
-    variables = []
-    for attr, value in items:
-        if is_skipped_attribute(attr):
-            continue
-        if attr not in done:
-            variables.append('%s: Any = ...' % attr)
-    all_bases = obj.mro()
-    # remove the class itself
-    all_bases = all_bases[1:]
-    # Remove base classes of other bases as redundant.
-    bases = []  # type: List[type]
-    for base in all_bases:
-        if base.__name__ not in skip_base_names and not any(issubclass(b, base) for b in bases):
-            bases.append(base)
-    if bases:
-        bases_str = '(%s)' % ', '.join(base.__name__ for base in bases)
-    else:
-        bases_str = ''
-    if not methods and not variables and not properties:
-        output.append('class %s%s: ...' % (class_name, bases_str))
-    else:
-        output.append('class %s%s:' % (class_name, bases_str))
-        for variable in variables:
-            output.append('    %s' % variable)
-        for method in methods:
-            output.append('    %s' % method)
-        for prop in properties:
-            output.append('    %s' % prop)
+def is_c_module(module: ModuleType) -> bool:
+    return ('__file__' not in module.__dict__ or
+            os.path.splitext(module.__dict__['__file__'])[-1] in ['.so', '.pyd'])
 
 
 def method_name_sort_key(name: str) -> Tuple[int, str]:
@@ -247,39 +308,12 @@ def method_name_sort_key(name: str) -> Tuple[int, str]:
     return 1, name
 
 
-def is_skipped_attribute(attr: str) -> bool:
-    return attr in ('__getattribute__',
-                    '__str__',
-                    '__repr__',
-                    '__doc__',
-                    '__dict__',
-                    '__module__',
-                    '__weakref__')  # For pickling
-
-
-def infer_method_sig(name: str) -> str:
-    if name.startswith('__') and name.endswith('__'):
-        name = name[2:-2]
-        if name in ('hash', 'iter', 'next', 'sizeof', 'copy', 'deepcopy', 'reduce', 'getinitargs',
-                    'int', 'float', 'trunc', 'complex', 'bool'):
-            return '()'
-        if name == 'getitem':
-            return '(index)'
-        if name == 'setitem':
-            return '(index, object)'
-        if name in ('delattr', 'getattr'):
-            return '(name)'
-        if name == 'setattr':
-            return '(name, value)'
-        if name == 'getstate':
-            return '()'
-        if name == 'setstate':
-            return '(state)'
-        if name in ('eq', 'ne', 'lt', 'le', 'gt', 'ge',
-                    'add', 'radd', 'sub', 'rsub', 'mul', 'rmul',
-                    'mod', 'rmod', 'floordiv', 'rfloordiv', 'truediv', 'rtruediv',
-                    'divmod', 'rdivmod', 'pow', 'rpow'):
-            return '(other)'
-        if name in ('neg', 'pos'):
-            return '()'
-    return '(*args, **kwargs)'
+def write_header(file: IO[str], module_name: Optional[str]) -> None:
+    file.write('# -*- coding: utf-8 -*-\n')
+    if module_name:
+        version = '%d.%d' % (sys.version_info.major,
+                             sys.version_info.minor)
+        file.write('# Stubs for %s (Python %s)\n' % (module_name, version))
+    file.write(
+        '#\n'
+        '# NOTE: This dynamically typed stub was automatically generated by stubgen.\n\n')
