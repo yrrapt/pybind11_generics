@@ -2,9 +2,10 @@
 
 """This module handles parsing type hinting information from pybind11 docstrings."""
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import ast
+from itertools import islice
 
 # list of classes we need to import from typing package if present
 typing_imports = ('Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 'Iterable', 'Iterator')
@@ -13,6 +14,7 @@ typing_imports = ('Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 'Iterable
 class PkgClsParser(ast.NodeVisitor):
     """This parser processes an ast.Attribute node to get the package name and class name.
     """
+
     def __init__(self) -> None:
         ast.NodeVisitor.__init__(self)
 
@@ -147,14 +149,49 @@ def get_prop_type(docstr: str, imports: Dict[str, str]) -> str:
     return 'Any'
 
 
-def get_function_stub(name: str,
-                      docstr: str,
-                      self_var: Optional[str],
-                      cls_name: Optional[str],
-                      imports: Dict[str, str],
-                      ) -> str:
-    declaration = 'def {}: ...'.format(docstr.split('\n', 1)[0].strip())
+def write_function_stubs(name: str,
+                         docstr: str,
+                         self_var: Optional[str],
+                         cls_name: Optional[str],
+                         output: List[str],
+                         imports: Dict[str, str],
+                         ) -> None:
+    def_fmt = 'def {}: ...'
 
+    docstr_lines = docstr.split('\n')
+    first_line = docstr_lines[0].strip()
+    overloaded = False
+    if first_line == name + '(*args, **kwargs)' and len(docstr_lines) > 1:
+        # we potentially have overloaded functions; check
+        second_line = docstr_lines[1].strip()
+        if second_line == 'Overloaded function.':
+            # we do have overloaded functions
+            overloaded = True
+
+    if overloaded:
+        imports['overload'] = 'typing'
+        cnt = 1
+        for line in islice(docstr_lines, 2, None):
+            line = line.strip()
+            prefix = str(cnt) + '. '
+            if line.startswith('{}{}('.format(prefix, name)):
+                # this is a overload function definition line
+                output.append('@overload')
+                output.append(process_function_def(name, def_fmt.format(line[len(prefix):]),
+                                                   self_var, cls_name, imports))
+                cnt += 1
+
+    else:
+        output.append(process_function_def(name, def_fmt.format(first_line), self_var,
+                                           cls_name, imports))
+
+
+def process_function_def(name: str,
+                         declaration: str,
+                         self_var: Optional[str],
+                         cls_name: Optional[str],
+                         imports: Dict[str, str],
+                         ) -> str:
     try:
         func_node = ast.parse(declaration).body[0]
         # parse successful and found content, record all imports

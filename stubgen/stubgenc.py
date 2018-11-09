@@ -14,7 +14,7 @@ import sys
 import inspect
 import importlib
 
-from .parsedoc import get_prop_type, get_function_stub
+from .parsedoc import get_prop_type, write_function_stubs
 
 # list of base class names to ignore
 skip_base_names = ('pybind11_object', 'object')
@@ -112,8 +112,7 @@ def process_c_function(name: str,
     if check and not is_c_function(obj):
         return False
 
-    func_str = get_function_stub(name, getattr(obj, '__doc__', ''), self_var, cls_name, imports)
-    output.append(func_str)
+    write_function_stubs(name, getattr(obj, '__doc__', ''), self_var, cls_name, output, imports)
     return True
 
 
