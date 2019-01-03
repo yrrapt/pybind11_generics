@@ -19,6 +19,11 @@ template <typename T> class List : public list_base {
     using base_iter_type = py::detail::list_iterator;
     using const_iterator = cast_input_iterator<value_type, base_iter_type>;
 
+    template <typename V>
+    using IsT =
+        std::enable_if_t<std::is_same_v<value_type, std::remove_cv_t<std::remove_reference_t<V>>>,
+                         int>;
+
     // inherit check_ so we can check if a python object matches this generic
     using list_base::check_;
     using list_base::list_base;
@@ -33,16 +38,10 @@ template <typename T> class List : public list_base {
     const_iterator begin() const { return const_iterator(list_base::begin()); }
     const_iterator end() const { return const_iterator(list_base::end()); }
 
-    template <class V, std::enable_if_t<
-                           std::is_same_v<value_type, std::remove_cv_t<std::remove_reference_t<V>>>,
-                           int> = 0>
-    void append(V &&val) const {
+    template <class V, IsT<V> = 0> void append(V &&val) const {
         list_base::append(std::forward<V>(val));
     }
-    template <class V, std::enable_if_t<
-                           std::is_same_v<value_type, std::remove_cv_t<std::remove_reference_t<V>>>,
-                           int> = 0>
-    void push_back(V &&val) {
+    template <class V, IsT<V> = 0> void push_back(V &&val) {
         list_base::append(std::forward<V>(val));
     }
     template <class... Args> void emplace_back(Args &&... args) {
