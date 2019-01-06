@@ -3,7 +3,7 @@
 import pytest
 
 import pyg_test
-from pyg_test import get_list
+from pyg_test import get_list, ListHolder
 
 from .util import do_constructor_test, do_error_test, do_doc_test
 
@@ -63,3 +63,10 @@ def test_inheritance():
     assert obj.get_data() == vec2
     assert obj.get_data_base() == vec1
     assert get_list(obj) == vec1
+
+    holder = ListHolder(obj)
+    obj_ref = holder.get_obj_ref()
+    obj_ptr = holder.get_obj_ptr()
+    assert obj_ref is obj
+    assert obj_ptr is obj
+    assert isinstance(obj_ref, ChildList)
