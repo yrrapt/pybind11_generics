@@ -3,8 +3,21 @@
 import pytest
 
 import pyg_test
+from pyg_test import get_list
 
 from .util import do_constructor_test, do_error_test, do_doc_test
+
+class ChildList(pyg_test.TestList):
+    def __init__(self, vec1, vec2):
+        pyg_test.TestList.__init__(self, vec1)
+        self._list2 = vec2
+
+    def get_data(self):
+        return self._list2
+
+    def get_data_base(self):
+        return pyg_test.TestList.get_data(self)
+
 
 test_data = [
     (pyg_test.TestList, []),
@@ -38,3 +51,15 @@ def test_error(cls, err, data):
 def test_doc(cls, type_str):
     """Check object has correct doc string."""
     do_doc_test(cls, type_str)
+
+
+def test_inheritance():
+    """Test inheritance behavior."""
+    vec1 = [1, 2, 3, 4]
+    vec2 = [5, 6, 7]
+
+    obj = ChildList(vec1, vec2)
+
+    assert obj.get_data() == vec2
+    assert obj.get_data_base() == vec1
+    assert get_list(obj) == vec1
