@@ -67,6 +67,13 @@ template <typename... T> class Tuple : public tuple_base {
 
         return {result, stolen_t{}};
     }
+
+    static Tuple make_tuple(const T &... args) {
+        PyObject *result = PyTuple_New((Py_ssize_t)sizeof...(T));
+        detail::set_tuple<0>{}(result, args...);
+
+        return {result, stolen_t{}};
+    }
 };
 
 } // namespace pybind11_generics
