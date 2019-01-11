@@ -3,9 +3,17 @@
 import pytest
 
 import pyg_test
-from pyg_test import get_list, ListHolder
+from pyg_test import get_list, ListHolder, Animal
 
 from .util import do_constructor_test, do_error_test, do_doc_test
+
+class Husky(Animal):
+    def __init__(self, name):
+        Animal.__init__(self, name)
+
+    def go(self, n_times):
+        return 'woof ' * n_times 
+
 
 class ChildList(pyg_test.TestList):
     def __init__(self, vec1, vec2):
@@ -70,3 +78,12 @@ def test_inheritance():
     assert obj_ref is obj
     assert obj_ptr is obj
     assert isinstance(obj_ref, ChildList)
+
+
+def test_virtual():
+    """Test overriding virtual methods from python."""
+    prime = Animal("Prime")
+    dog = Husky("Lily")
+
+    assert(prime.command(2) == "Prime: ")
+    assert(dog.command(3) == "Lily: woof woof woof ")
