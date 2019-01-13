@@ -39,3 +39,14 @@ def test_error(cls, err, data):
 def test_doc(cls, type_str):
     """Check object has correct doc string."""
     do_doc_test(cls, type_str)
+
+
+@pytest.mark.parametrize("cls,data", test_data)
+def test_value(cls, data):
+    obj = cls(data)
+
+    if data is None:
+        assert not obj.has_value()
+    else:
+        assert obj.has_value()
+        assert obj.get_data() == data

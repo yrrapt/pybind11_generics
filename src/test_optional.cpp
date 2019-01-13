@@ -19,11 +19,14 @@ class test_optional {
   public:
     explicit test_optional(value_type val) : data_(std::move(val)) {}
 
-    const value_type &get_data() { return data_; }
+    const value_type &get_data() const { return data_; }
+
+    bool has_value() const { return data_.has_value(); }
 };
 
 void bind_test_optional(py::module &m) {
     py::class_<test_optional>(m, "TestOptional")
         .def(py::init<pyg::Optional<pyg::List<int>>>(), "Initializer.")
-        .def("get_data", &test_optional::get_data, "Get a copy of the data.");
+        .def("get_data", &test_optional::get_data, "Get a copy of the data.")
+        .def("has_value", &test_optional::has_value, "True if the given data is not None.");
 }
