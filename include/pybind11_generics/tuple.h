@@ -52,7 +52,7 @@ template <typename... T> class Tuple : public tuple_base {
 
     explicit Tuple(size_t size = 0) : tuple_base(sizeof...(T)) {}
 
-    template <std::size_t I> std::tuple_element_t<I, std::tuple<T...>> get() {
+    template <std::size_t I> std::tuple_element_t<I, std::tuple<T...>> get() const {
         PyObject *result = PyTuple_GetItem(ptr(), static_cast<Py_ssize_t>(I));
         if (!result) {
             throw py::error_already_set();
@@ -77,6 +77,16 @@ template <typename... T> class Tuple : public tuple_base {
 };
 
 } // namespace pybind11_generics
+
+namespace std {
+
+template <typename... T>
+struct tuple_size<pybind11_generics::Tuple<T...>> : tuple_size<tuple<T...>> {};
+
+template <size_t N, typename... T>
+struct tuple_element<N, pybind11_generics::Tuple<T...>> : tuple_element<N, tuple<T...>> {};
+
+} // namespace std
 
 namespace pybind11 {
 namespace detail {
