@@ -1,5 +1,21 @@
-#include <vector>
+/*
+   Copyright 2018 Eric Chang
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 #include <utility>
+#include <vector>
 
 #include <pybind11/stl.h>
 
@@ -31,10 +47,10 @@ class test_iter_str {
 using vec_pair = std::vector<std::pair<int, int>>;
 
 class test_iter_pair {
-private:
+  private:
     vec_pair data_;
 
-public:
+  public:
     explicit test_iter_pair(pyg::Iterator<std::pair<int, int>> iter) {
         for (const auto &p : iter) {
             data_.emplace_back(p);
@@ -57,7 +73,7 @@ void bind_test_iter(py::module &m) {
         .def("get_data", &test_iter_str::get_data, "Get a copy of the data.");
 
     py::class_<test_iter_pair>(m, "TestIterPair")
-            .def(py::init<pyg::Iterator<std::pair<int, int>>>(), "Initializer.")
-            .def("get_iter", &test_iter_pair::get_iter, "Get iterator.")
-            .def("get_data", &test_iter_pair::get_data, "Get a copy of the data.");
+        .def(py::init<pyg::Iterator<std::pair<int, int>>>(), "Initializer.")
+        .def("get_iter", &test_iter_pair::get_iter, "Get iterator.")
+        .def("get_data", &test_iter_pair::get_data, "Get a copy of the data.");
 }

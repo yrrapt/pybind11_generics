@@ -1,3 +1,19 @@
+/*
+   Copyright 2018 Eric Chang
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 #include <string>
 #include <tuple>
 #include <utility>
@@ -25,10 +41,10 @@ class test_tuple_pair {
 };
 
 class test_tuple_tuple {
-private:
+  private:
     std::tuple<int, double, std::string> data_;
 
-public:
+  public:
     explicit test_tuple_tuple(pyg::Tuple<int, double, std::string> data) {
         std::get<0>(data_) = data.get<0>();
         std::get<1>(data_) = data.get<1>();
@@ -44,6 +60,6 @@ void bind_test_tuple(py::module &m) {
         .def("get_data", &test_tuple_pair::get_data, "Get a copy of the data.");
 
     py::class_<test_tuple_tuple>(m, "TestTupleTuple")
-            .def(py::init<pyg::Tuple<int, double, std::string>>(), "Initializer.")
-    .def("get_data", &test_tuple_tuple::get_data, "Get a copy of the data.");
+        .def(py::init<pyg::Tuple<int, double, std::string>>(), "Initializer.")
+        .def("get_data", &test_tuple_tuple::get_data, "Get a copy of the data.");
 }
