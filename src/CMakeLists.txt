@@ -1,5 +1,3 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 set(SRC_FILES_TEST
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/move_cast.cpp
@@ -14,6 +12,11 @@ set(SRC_FILES_TEST
   )
 
 pybind11_add_module(pyg_test ${SRC_FILES_TEST})
+
+target_include_directories(pyg_test
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
 target_link_libraries(pyg_test
   PRIVATE
