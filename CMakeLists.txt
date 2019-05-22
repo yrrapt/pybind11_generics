@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(pybind11_generics)
 
-# Check if pybind11 is being used directly or via add_subdirectory
+# Check if we are building this project as top level
 set(PYBIND11_GENERICS_MASTER_PROJECT OFF)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(PYBIND11_GENERICS_MASTER_PROJECT ON)
@@ -11,10 +11,6 @@ endif()
 option(PYBIND11_GENERICS_TEST "Build pybind11_generics test suite?"
   ${PYBIND11_GENERICS_MASTER_PROJECT})
 
-# Boost Spirit X3 requires C++14
-# __has_include directive requires C++17
-# std::variant requires C++17
-# map::extract (use of node handles) requires C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # control compiler warnings
@@ -49,11 +45,16 @@ add_subdirectory(pybind11)
 
 # Define pybind11_generics interface library
 add_library(pybind11_generics INTERFACE)
-target_link_libraries(pybind11_generics INTERFACE pybind11::module)
-target_include_directories(pybind11_generics INTERFACE include/)
-target_sources(pybind11_generics INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/pybind11_generics/list.h
-)
+
+target_link_libraries(pybind11_generics
+  INTERFACE
+  pybind11::module
+  )
+
+target_include_directories(pybind11_generics
+  INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
 
 if (PYBIND11_GENERICS_TEST)
   add_subdirectory(src)
