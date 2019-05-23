@@ -77,10 +77,9 @@ template <typename K, typename V> class Dict : public dict_base {
     template <class KeyType,
               std::enable_if_t<
                   std::is_same_v<K, std::remove_cv_t<std::remove_reference_t<KeyType>>>, int> = 0>
-    value_type operator[](KeyType &&key) const {
-        PyObject *result;
+    V operator[](KeyType &&key) const {
         auto key_obj = py::detail::object_or_cast(std::forward<KeyType>(key));
-        *result = PyObject_GetItem(ptr(), key_obj.ptr());
+        auto result = PyObject_GetItem(ptr(), key_obj.ptr());
 
         if (!result) {
             throw py::error_already_set();
