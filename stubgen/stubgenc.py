@@ -72,7 +72,11 @@ def generate_stub_for_c_module(module_name: str,
             for c_name, m_name in sorted(imports.items(), key=lambda x: x[1]):
                 if m_name != module_name:
                     # a class in a different module, write import statement
-                    file.write('from {} import {}\n'.format(m_name, c_name))
+                    if c_name == 'ndarray':
+                        # numpy array alias
+                        file.write(f'from {m_name} import ndarray as array\n')
+                    else:
+                        file.write(f'from {m_name} import {c_name}\n')
             file.write('\n')
         if variables:
             for line in variables:
@@ -109,7 +113,7 @@ def process_c_var(name: str,
 
     type_obj = type(obj)
     imports[type_obj.__name__] = type_obj.__module__
-    output.append('{}: {} = ...'.format(name, type_obj.__name__))
+    output.append(f'{name}: {type_obj.__name__} = ...')
     return True
 
 
@@ -164,17 +168,17 @@ def process_c_type(cls_name: str,
         if base.__name__ not in skip_base_names and not any(issubclass(b, base) for b in bases):
             bases.append(base)
     if bases:
-        bases_str = '({})'.format(', '.join(base.__name__ for base in bases))
+        bases_str = f'({", ".join(base.__name__ for base in bases)})'
     else:
         bases_str = ''
 
     if not methods and not variables and not properties:
-        output.append(['class {}{}: ...'.format(cls_name, bases_str)])
+        output.append([f'class {cls_name}{bases_str}: ...'])
     else:
-        cls_lines = ['class {}{}:'.format(cls_name, bases_str)]
-        cls_lines.extend(('    {}'.format(line) for line in variables))
-        cls_lines.extend(('    {}'.format(line) for line in properties))
-        cls_lines.extend(('    {}'.format(line) for line in methods))
+        cls_lines = [f'class {cls_name}{bases_str}:']
+        cls_lines.extend((f'    {line}' for line in variables))
+        cls_lines.extend((f'    {line}' for line in properties))
+        cls_lines.extend((f'    {line}' for line in methods))
         output.append(cls_lines)
 
     return True
@@ -213,10 +217,10 @@ def process_c_property(name: str,
     prop_type = get_prop_type(getattr(obj, '__doc__', ''), imports)
 
     output.append('@property')
-    output.append('def {}(self) -> {}: ...'.format(name, prop_type))
+    output.append(f'def {name}(self) -> {prop_type}: ...')
     if not readonly:
-        output.append('@{}.setter'.format(name))
-        output.append('def {}(self, val: {}) -> None: ...'.format(name, prop_type))
+        output.append(f'@{name}.setter')
+        output.append(f'def {name}(self, val: {prop_type}) -> None: ...')
 
     return True
 

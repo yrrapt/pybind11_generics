@@ -73,6 +73,9 @@ class ImportsParser(ast.NodeVisitor):
     def visit_Name(self, node: ast.Name) -> None:
         if node.id in typing_imports:
             self._imports[node.id] = 'typing'
+        elif node.id == 'array':
+            # Numpy array support
+            self._imports['ndarray'] = 'numpy'
 
     # noinspection PyPep8Naming
     def visit_Attribute(self, node: ast.Attribute) -> None:
@@ -168,8 +171,6 @@ def write_function_stubs(name: str,
                          output: List[str],
                          imports: Dict[str, str],
                          ) -> None:
-    def_fmt = 'def {}: ...'
-
     docstr_lines = docstr.split('\n')
     first_line = docstr_lines[0].strip()
     overloaded = False
@@ -186,15 +187,15 @@ def write_function_stubs(name: str,
         for line in islice(docstr_lines, 2, None):
             line = line.strip()
             prefix = str(cnt) + '. '
-            if line.startswith('{}{}('.format(prefix, name)):
+            if line.startswith(f'{prefix}{name}('):
                 # this is a overload function definition line
                 output.append('@overload')
-                output.append(process_function_def(name, def_fmt.format(line[len(prefix):]),
+                output.append(process_function_def(name, f'def {line[len(prefix):]}: ...',
                                                    self_var, cls_name, imports))
                 cnt += 1
 
     else:
-        output.append(process_function_def(name, def_fmt.format(first_line), self_var,
+        output.append(process_function_def(name, f'def {first_line}: ...', self_var,
                                            cls_name, imports))
 
 
@@ -220,7 +221,7 @@ def process_function_def(name: str,
 
     imports['Any'] = 'typing'
     self_arg = self_var + ', ' if self_var else ''
-    return 'def {}({}*args: Any, **kwargs: Any) -> Any: ...'.format(name, self_arg)
+    return f'def {name}({self_arg}*args: Any, **kwargs: Any) -> Any: ...'
 
 
 def check_builtin_sig(name: str,
@@ -228,11 +229,11 @@ def check_builtin_sig(name: str,
                       self_var: str,
                       ) -> str:
     if name in ('int', 'float', 'complex', 'bool'):
-        return 'def __{}__({}) -> {}: ...'.format(name, self_var, name)
+        return f'def __{name}__({self_var}) -> {name}: ...'
     if name in ('hash', 'sizeof', 'trunc', 'floor', 'ceil'):
-        return 'def __{}__({}) -> {}: ...'.format(name, self_var, 'int')
+        return f'def __{name}__({self_var}) -> int: ...'
     if name in ('copy', 'deepcopy'):
-        return 'def __{}__({}) -> {}: ...'.format(name, self_var, cls_name)
+        return f'def __{name}__({self_var}) -> {cls_name}: ...'
     if name == 'delattr':
-        return 'def __{}__({}) -> {}: ...'.format(name, self_var, 'None')
+        return f'def __{name}__({self_var}) -> None: ...'
     return ''
