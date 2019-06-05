@@ -59,7 +59,7 @@ template <typename T> class Iterator : public iterator_base {
         return *value_;
     }
 
-    pointer operator-() {
+    pointer operator->() {
         if (m_ptr && !value_) {
             _advance();
         }
