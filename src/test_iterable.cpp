@@ -14,6 +14,7 @@
    limitations under the License.
 */
 
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -49,6 +50,11 @@ std::vector<std::string> copy_list_from_iterable(pyg::Iterable<std::string> iter
     return std::vector<std::string>(iter.begin(), iter.end());
 }
 
+std::vector<std::string> copy_list_from_iterable_set(pyg::Iterable<std::string> iter) {
+    auto set = std::unordered_set<std::string>(iter.begin(), iter.end());
+    return std::vector<std::string>(set.begin(), set.end());
+}
+
 void bind_test_iterable(py::module &m) {
     py::class_<test_iterable<std::string>>(m, "TestIterableString")
         .def(py::init<pyg::Iterable<std::string>>(), "Initializer.")
@@ -58,4 +64,7 @@ void bind_test_iterable(py::module &m) {
         .def("get_data", &test_iterable<std::pair<int, int>>::get_data, "Get a copy of the data.");
     m.def("copy_list_from_iterable", &copy_list_from_iterable,
           "create list in c++ with iterable from python.", py::arg("iter"));
+    m.def("copy_list_from_iterable_set", &copy_list_from_iterable_set,
+          "create list in c++ with iterable from python.  Implemented with unordered_set",
+          py::arg("iter"));
 }

@@ -39,7 +39,7 @@ class test_iter_str {
     }
 
     const vec_str &get_data() const { return data_; }
-    pyg::Iterator<std::string> get_iter() const {
+    pyg::PyIterator<std::string> get_iter() const {
         return pyg::make_iterator(data_.cbegin(), data_.cend());
     }
 };
@@ -58,7 +58,7 @@ class test_iter_pair {
     }
 
     const vec_pair &get_data() const { return data_; }
-    pyg::Iterator<std::pair<int, int>> get_iter() const {
+    pyg::PyIterator<std::pair<int, int>> get_iter() const {
         return pyg::make_iterator(data_.cbegin(), data_.cend());
     }
 };

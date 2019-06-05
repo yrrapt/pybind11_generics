@@ -85,6 +85,13 @@ def test_copy_list_from_iterable(str_list):
     assert py_list == str_list
 
 
+@pytest.mark.parametrize("str_list", copy_data)
+def test_copy_list_from_iterable_set(str_list):
+    str_set = set(str_list)
+    py_list = pyg_test.copy_list_from_iterable_set(str_set)
+    assert sorted(py_list) == sorted(str_set)
+
+
 @pytest.mark.parametrize("table", copy_data_dict)
 def test_copy_list_from_iterable_dict(table):
     expect = list(table.keys())

@@ -32,6 +32,14 @@ namespace pybind11_generics {
 
 using iterator_base = py::object;
 
+// A class to return C++ iterators to Python.  Does nothing
+// and is only used to get typehint strings to work.
+template <typename T> class PyIterator : public iterator_base {
+  public:
+    PYBIND11_OBJECT_DEFAULT(PyIterator, iterator_base, PyIter_Check);
+};
+
+// A class to use Python iterators in C++
 template <typename T> class Iterator : public iterator_base {
   public:
     using iterator_category = std::input_iterator_tag;
@@ -44,7 +52,21 @@ template <typename T> class Iterator : public iterator_base {
     std::optional<value_type> value_ = {};
 
   public:
-    PYBIND11_OBJECT_DEFAULT(Iterator, iterator_base, PyIter_Check)
+    Iterator() : iterator_base() { _eval(); };
+    Iterator(const py::object &o) : iterator_base(o) { _eval(); }
+    Iterator(py::object &&o) : iterator_base(std::move(o)) { _eval(); }
+    Iterator(py::handle h, borrowed_t) : iterator_base(h, borrowed_t{}) { _eval(); }
+    Iterator(py::handle h, stolen_t) : iterator_base(h, stolen_t{}) { _eval(); }
+
+    // explicitly prohibit converting PyIterator to Iterator.
+    // PyIterator should not be used in C++ at all.
+    Iterator(const PyIterator<T> &rhs) = delete;
+    Iterator(PyIterator<T> &&rhs) = delete;
+
+    static bool check_(handle h) {
+        auto ptr = h.ptr();
+        return ptr && PyIter_Check(ptr);
+    }
 
     static Iterator sentinel() { return {}; }
 
@@ -52,45 +74,11 @@ template <typename T> class Iterator : public iterator_base {
 
     Iterator end() const { return sentinel(); }
 
-    reference operator*() {
-        if (m_ptr && !value_) {
-            _advance();
-        }
-        return *value_;
-    }
+    reference operator*() { return *value_; }
 
-    pointer operator->() {
-        if (m_ptr && !value_) {
-            _advance();
-        }
-        return value_.operator->();
-    }
+    pointer operator->() { return value_.operator->(); }
 
     Iterator &operator++() {
-        _advance();
-        return *this;
-    }
-
-    Iterator operator++(int) {
-        auto rv = *this;
-        _advance();
-        return rv;
-    }
-
-    friend bool operator==(const Iterator &a, const Iterator &b) {
-        if (a.m_ptr && !a.value_) {
-            const_cast<Iterator &>(a)._advance();
-        }
-        if (b.m_ptr && !b.value_) {
-            const_cast<Iterator &>(b)._advance();
-        }
-        return a.is(b);
-    }
-
-    friend bool operator!=(const Iterator &a, const Iterator &b) { return !(a == b); }
-
-  private:
-    void _advance() {
         if (m_ptr) {
             PyObject *ptr = PyIter_Next(m_ptr);
             if (PyErr_Occurred()) {
@@ -99,6 +87,26 @@ template <typename T> class Iterator : public iterator_base {
             if (!ptr) {
                 m_ptr = nullptr;
                 value_.reset();
+            } else {
+                value_ = cast_from_handle_steal<value_type>(py::handle(ptr));
+            }
+        }
+        return *this;
+    }
+
+    friend bool operator==(const Iterator &a, const Iterator &b) { return a.is(b); }
+
+    friend bool operator!=(const Iterator &a, const Iterator &b) { return !(a == b); }
+
+  private:
+    void _eval() {
+        if (m_ptr && !value_) {
+            PyObject *ptr = PyIter_Next(m_ptr);
+            if (PyErr_Occurred()) {
+                throw py::error_already_set();
+            }
+            if (!ptr) {
+                m_ptr = nullptr;
             } else {
                 value_ = cast_from_handle_steal<value_type>(py::handle(ptr));
             }
@@ -135,7 +143,7 @@ void declare_iterator() {
 template <typename Iter, typename Sentinel = Iter,
           py::return_value_policy Policy = py::return_value_policy::reference_internal>
 auto make_iterator(Iter first, Sentinel last)
-    -> Iterator<std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<Iter>())>>> {
+    -> PyIterator<std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<Iter>())>>> {
     return py::cast(IteratorState<Iter, Sentinel, Policy>{std::move(first), std::move(last)});
 }
 
@@ -145,6 +153,10 @@ namespace pybind11 {
 namespace detail {
 
 template <typename T> struct handle_type_name<pybind11_generics::Iterator<T>> {
+    static constexpr auto name = _("Iterator[") + py::detail::make_caster<T>::name + _("]");
+};
+
+template <typename T> struct handle_type_name<pybind11_generics::PyIterator<T>> {
     static constexpr auto name = _("Iterator[") + py::detail::make_caster<T>::name + _("]");
 };
 
