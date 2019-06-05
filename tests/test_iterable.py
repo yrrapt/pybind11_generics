@@ -42,6 +42,7 @@ fail_data = [
 copy_data = [
     ["in", "out", "VDD", "VSS"],
     ["a", "bc", "dfe"],
+    ['in', 'out', 'VDD', 'VDD', 'VSS'],
 ]
 
 
