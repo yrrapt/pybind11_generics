@@ -41,20 +41,7 @@ template <typename T> class Iterator : public iterator_base {
     using pointer = const value_type *;
 
   private:
-    std::optional<value_type> value = {};
-
-    void advance() {
-        PyObject *ptr = PyIter_Next(m_ptr);
-        if (PyErr_Occurred()) {
-            throw py::error_already_set();
-        }
-        if (ptr == nullptr) {
-            m_ptr = nullptr;
-            value.reset();
-        } else {
-            value = cast_from_handle_steal<value_type>(py::handle(ptr));
-        }
-    }
+    std::optional<value_type> value_ = {};
 
   public:
     PYBIND11_OBJECT_DEFAULT(Iterator, iterator_base, PyIter_Check)
@@ -65,40 +52,58 @@ template <typename T> class Iterator : public iterator_base {
 
     Iterator end() const { return sentinel(); }
 
+    reference operator*() {
+        if (m_ptr && !value_) {
+            _advance();
+        }
+        return *value_;
+    }
+
+    pointer operator-() {
+        if (m_ptr && !value_) {
+            _advance();
+        }
+        return value_.operator->();
+    }
+
     Iterator &operator++() {
-        advance();
+        _advance();
         return *this;
     }
 
     Iterator operator++(int) {
         auto rv = *this;
-        advance();
+        _advance();
         return rv;
     }
 
-    reference operator*() const {
-        evaluate();
-        return *value;
-    }
-
-    pointer operator->() const {
-        evaluate();
-        return value.operator->();
-    }
-
-    const std::optional<value_type> &evaluate() const {
-        if (m_ptr && !value) {
-            auto &self = const_cast<Iterator &>(*this);
-            self.advance();
-        }
-        return value;
-    }
-
     friend bool operator==(const Iterator &a, const Iterator &b) {
-        return a.evaluate() == b.evaluate();
+        if (a.m_ptr && !a.value_) {
+            const_cast<Iterator &>(a)._advance();
+        }
+        if (b.m_ptr && !b.value_) {
+            const_cast<Iterator &>(b)._advance();
+        }
+        return a.is(b);
     }
 
     friend bool operator!=(const Iterator &a, const Iterator &b) { return !(a == b); }
+
+  private:
+    void _advance() {
+        if (m_ptr) {
+            PyObject *ptr = PyIter_Next(m_ptr);
+            if (PyErr_Occurred()) {
+                throw py::error_already_set();
+            }
+            if (!ptr) {
+                m_ptr = nullptr;
+                value_.reset();
+            } else {
+                value_ = cast_from_handle_steal<value_type>(py::handle(ptr));
+            }
+        }
+    }
 };
 
 template <typename Iter, typename Sentinel, py::return_value_policy Policy> class IteratorState {
@@ -107,7 +112,7 @@ template <typename Iter, typename Sentinel, py::return_value_policy Policy> clas
     Sentinel end;
 
     IteratorState &get_iter() { return *this; }
-    auto get_next() -> std::remove_reference_t<decltype(*std::declval<Iter>())> {
+    auto get_next() -> std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<Iter>())>> {
         if (it == end) {
             throw py::stop_iteration();
         }
@@ -120,7 +125,7 @@ template <typename Iter, typename Sentinel, py::return_value_policy Policy> clas
 template <typename Iter, typename Sentinel = Iter,
           py::return_value_policy Policy = py::return_value_policy::reference_internal>
 void declare_iterator() {
-    typedef IteratorState<Iter, Sentinel, Policy> state;
+    using state = IteratorState<Iter, Sentinel, Policy>;
 
     py::class_<state>(py::handle(), "IteratorState", py::module_local())
         .def("__iter__", &state::get_iter)

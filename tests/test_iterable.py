@@ -39,6 +39,17 @@ fail_data = [
     (pyg_test.TestIterablePair, RuntimeError, "abc"),
 ]
 
+copy_data = [
+    ["in", "out", "VDD", "VSS"],
+    ["a", "bc", "dfe"],
+]
+
+
+copy_data_dict = [
+    {'a': 1, 'b': 5, 'def': 7},
+]
+
+
 doc_data = [
     (pyg_test.TestIterableString, 'Iterable[str]'),
     (pyg_test.TestIterablePair, 'Iterable[Tuple[int, int]]'),
@@ -65,3 +76,16 @@ def test_error(cls, err, data):
 def test_doc(cls, type_str):
     """Check object has correct doc string."""
     assert get_signature(cls.__init__) == init_signature.format(type_str)
+
+
+@pytest.mark.parametrize("str_list", copy_data)
+def test_copy_list_from_iterable(str_list):
+    py_list = pyg_test.copy_list_from_iterable(str_list)
+    assert py_list == str_list
+
+
+@pytest.mark.parametrize("table", copy_data_dict)
+def test_copy_list_from_iterable_dict(table):
+    expect = list(table.keys())
+    py_list = pyg_test.copy_list_from_iterable(table.keys())
+    assert py_list == expect

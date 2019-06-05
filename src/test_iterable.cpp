@@ -45,6 +45,10 @@ template <class T> class test_iterable {
     const vector_type &get_data() const { return data_; }
 };
 
+std::vector<std::string> copy_list_from_iterable(pyg::Iterable<std::string> iter) {
+    return std::vector<std::string>(iter.begin(), iter.end());
+}
+
 void bind_test_iterable(py::module &m) {
     py::class_<test_iterable<std::string>>(m, "TestIterableString")
         .def(py::init<pyg::Iterable<std::string>>(), "Initializer.")
@@ -52,4 +56,6 @@ void bind_test_iterable(py::module &m) {
     py::class_<test_iterable<std::pair<int, int>>>(m, "TestIterablePair")
         .def(py::init<pyg::Iterable<std::pair<int, int>>>(), "Initializer.")
         .def("get_data", &test_iterable<std::pair<int, int>>::get_data, "Get a copy of the data.");
+    m.def("copy_list_from_iterable", &copy_list_from_iterable,
+          "create list in c++ with iterable from python.", py::arg("iter"));
 }
