@@ -40,8 +40,6 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # Include pybind11
-# enable C++17 support for variant/optional wrapping
-set(PYBIND11_CPP_STANDARD --std=c++1z)
 add_subdirectory(pybind11)
 
 # Define pybind11_generics interface library
