@@ -17,7 +17,8 @@
 The public interface is via the mypy.stubgen module.
 """
 
-from typing import List, Tuple, Optional, Mapping, Any, Dict, IO
+from typing import List, Tuple, Optional, Mapping, Any, Dict, IO, cast
+
 # noinspection PyUnresolvedReferences
 from types import ModuleType
 
@@ -193,11 +194,12 @@ def process_c_method(name: str,
                      cls_name: str,
                      ) -> bool:
     is_static = is_c_staticmethod(obj)
-    if not is_c_method(obj) and not is_static:
+    if not is_static and not is_c_method(obj):
         return False
 
     if is_static:
         output.append('@staticmethod')
+        obj = cast(staticmethod, obj).__func__
         self_var = None
     else:
         self_var = 'self'
@@ -228,7 +230,7 @@ def process_c_property(name: str,
 
 
 def is_c_function(obj: object) -> bool:
-    return is_c_staticmethod(obj) or type(obj) is type(ord)
+    return type(obj) is type(ord)
 
 
 def is_c_method(obj: object) -> bool:
