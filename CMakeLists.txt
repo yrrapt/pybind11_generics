@@ -14,11 +14,10 @@ option(PYBIND11_GENERICS_TEST "Build pybind11_generics test suite?"
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # control compiler warnings
-add_compile_options(-fexceptions)
-add_compile_options(-g)
 add_compile_options(-Wall)
-add_compile_options(-Wno-delete-non-virtual-dtor)
+# add_compile_options(-Wno-delete-non-virtual-dtor)
 # add_compile_options(-Wno-logical-op-parentheses)
 # add_compile_options(-Wno-new-returns-null)
 # set optimzation level for release
@@ -33,11 +32,6 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 # add rpaths to the final install executable
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-# Must use GNUInstallDirs to install libraries into correct
-# locations on all platforms.
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
 
 # Include pybind11
 add_subdirectory(pybind11)
