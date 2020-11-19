@@ -32,6 +32,13 @@ def do_constructor_test(cls: Type[Any], data: object) -> None:
     else:
         assert obj.get_data() == data
 
+def do_constructor_test2(cls: Type[Any], data: object, expect: object) -> None:
+    obj = cls(data)
+    if expect is None:
+        assert obj.get_data() is None
+    else:
+        assert obj.get_data() == expect
+
 
 def do_error_test(cls: Type[Any], err: object, data: object) -> None:
     with pytest.raises(err):
@@ -43,3 +50,7 @@ def do_doc_test(cls: Type[Any], type_str: str, method_name_sig: Optional[Tuple[s
     if method_name_sig is None:
         method_name_sig = ('get_data', data_signature)
     assert get_signature(getattr(cls, method_name_sig[0])) == method_name_sig[1].format(type_str)
+
+
+def do_doc_test_init(cls: Type[Any], type_str: str):
+    assert get_signature(cls.__init__) == init_signature.format(type_str)

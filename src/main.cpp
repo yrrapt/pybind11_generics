@@ -21,6 +21,7 @@
 #include "test_iterable.h"
 #include "test_list.h"
 #include "test_optional.h"
+#include "test_sequence.h"
 #include "test_tuple.h"
 #include "test_union.h"
 
@@ -29,6 +30,7 @@ PYBIND11_MODULE(pyg_test, m) {
               "data types.";
 
     bind_test_list(m);
+    bind_test_sequence(m);
     bind_test_any(m);
     bind_test_tuple(m);
     bind_test_dict(m);
