@@ -20,7 +20,8 @@ import ast
 from itertools import islice
 
 # list of classes we need to import from typing package if present
-typing_imports = ('Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 'Iterable', 'Iterator')
+typing_imports = ('Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 
+                  'Iterable', 'Iterator', 'Sequence')
 
 
 class PkgClsParser(ast.NodeVisitor):
