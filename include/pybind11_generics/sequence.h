@@ -34,35 +34,36 @@ template <typename T> class Sequence : public sequence_base {
       public:
         using difference_type = std::size_t;
         using iterator_category = std::input_iterator_tag;
-        using value_type = T;
-        using reference = value_type &;
-        using pointer = value_type *;
+        using value_type = std::remove_reference_t<T>;
+        using reference = const value_type &;
+        using pointer = const value_type *;
         using It = cast_seq_iterator;
-
-        struct arrow_proxy {
-            value_type value;
-
-            explicit arrow_proxy(value_type &&value) : value(std::move(value)) {}
-            const pointer operator->() const { return &value; }
-        };
 
       protected:
         Sequence seq_;
         std::size_t idx_;
+        value_type val_;
 
       public:
         cast_seq_iterator() = default;
 
-        explicit cast_seq_iterator(Sequence seq, std::size_t idx) : seq_(seq), idx_(idx) {}
+        explicit cast_seq_iterator(Sequence seq, std::size_t idx) : seq_(seq), idx_(idx) {
+            if (idx_ < seq_.size()) {
+                val_ = seq_[idx_];
+            }
+        }
 
         friend bool operator==(const It &a, const It &b) { return a.idx_ == b.idx_; }
         friend bool operator!=(const It &a, const It &b) { return !(a == b); }
 
-        const value_type operator*() const { return seq_[idx_]; }
-        arrow_proxy operator->() const { return arrow_proxy(**this); }
+        reference operator*() const { return val_; }
+        pointer operator->() const { return &val_; }
 
         It &operator++() {
             ++idx_;
+            if (idx_ < seq_.size()) {
+                val_ = seq_[idx_];
+            }
             return *this;
         }
         It operator++(int) {
@@ -74,7 +75,6 @@ template <typename T> class Sequence : public sequence_base {
 
   public:
     using value_type = std::remove_reference_t<T>;
-    using const_reference = const value_type &;
     using const_iterator = cast_seq_iterator;
 
     template <typename V>
