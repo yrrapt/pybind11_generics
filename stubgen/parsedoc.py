@@ -20,20 +20,28 @@ import ast
 from itertools import islice
 
 # list of classes we need to import from typing package if present
-typing_imports = ('Any', 'Union', 'Tuple', 'Optional', 'List', 'Dict', 
-                  'Iterable', 'Iterator', 'Sequence')
+typing_imports = (
+    "Any",
+    "Union",
+    "Tuple",
+    "Optional",
+    "List",
+    "Dict",
+    "Iterable",
+    "Iterator",
+    "Sequence",
+)
 
 
 class PkgClsParser(ast.NodeVisitor):
-    """This parser processes an ast.Attribute node to get the package name and class name.
-    """
+    """This parser processes an ast.Attribute node to get the package name and class name."""
 
     def __init__(self) -> None:
         ast.NodeVisitor.__init__(self)
 
         self._modules = []
-        self.class_name = ''
-        self.package_name = ''
+        self.class_name = ""
+        self.package_name = ""
 
     # noinspection PyPep8Naming
     def visit_Attribute(self, node: ast.Attribute) -> None:
@@ -46,12 +54,11 @@ class PkgClsParser(ast.NodeVisitor):
     # noinspection PyPep8Naming
     def visit_Name(self, node: ast.Name) -> None:
         self._modules.append(node.id)
-        self.package_name = '.'.join(reversed(self._modules))
+        self.package_name = ".".join(reversed(self._modules))
 
 
 class ImportsParser(ast.NodeVisitor):
-    """This parser process a method/property signature and gets all classes to import.
-    """
+    """This parser process a method/property signature and gets all classes to import."""
 
     def __init__(self, imports: Dict[str, str]) -> None:
         ast.NodeVisitor.__init__(self)
@@ -73,10 +80,10 @@ class ImportsParser(ast.NodeVisitor):
     # noinspection PyPep8Naming
     def visit_Name(self, node: ast.Name) -> None:
         if node.id in typing_imports:
-            self._imports[node.id] = 'typing'
-        elif node.id == 'array':
+            self._imports[node.id] = "typing"
+        elif node.id == "array":
             # Numpy array support
-            self._imports['ndarray'] = 'numpy'
+            self._imports["ndarray"] = "numpy"
 
     # noinspection PyPep8Naming
     def visit_Attribute(self, node: ast.Attribute) -> None:
@@ -85,7 +92,7 @@ class ImportsParser(ast.NodeVisitor):
         pkg_name = pkg_cls_parser.package_name
         cls_name = pkg_cls_parser.class_name
         self._imports[cls_name] = pkg_name
-        self.replacements[pkg_name + '.' + cls_name] = cls_name
+        self.replacements[pkg_name + "." + cls_name] = cls_name
 
     # noinspection PyPep8Naming
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
@@ -150,7 +157,7 @@ def get_prop_type(docstr: str, imports: Dict[str, str]) -> str:
     # extract the type string from docstring
     # get just the first line, then get the expression to the left of the colon, then
     # remove white spaces
-    type_str = docstr.split('\n', 1)[0].rsplit(':', 1)[0].strip()
+    type_str = docstr.split("\n", 1)[0].rsplit(":", 1)[0].strip()
 
     try:
         type_body = ast.parse(type_str).body
@@ -161,51 +168,57 @@ def get_prop_type(docstr: str, imports: Dict[str, str]) -> str:
         # parsing failed; fallback to default return value
         pass
 
-    imports['Any'] = 'typing'
-    return 'Any'
+    imports["Any"] = "typing"
+    return "Any"
 
 
-def write_function_stubs(name: str,
-                         docstr: str,
-                         self_var: Optional[str],
-                         cls_name: Optional[str],
-                         output: List[str],
-                         imports: Dict[str, str],
-                         ) -> None:
-    docstr_lines = docstr.split('\n')
+def write_function_stubs(
+    name: str,
+    docstr: str,
+    self_var: Optional[str],
+    cls_name: Optional[str],
+    output: List[str],
+    imports: Dict[str, str],
+) -> None:
+    docstr_lines = docstr.split("\n")
     first_line = docstr_lines[0].strip()
     overloaded = False
-    if first_line == name + '(*args, **kwargs)' and len(docstr_lines) > 1:
+    if first_line == name + "(*args, **kwargs)" and len(docstr_lines) > 1:
         # we potentially have overloaded functions; check
         second_line = docstr_lines[1].strip()
-        if second_line == 'Overloaded function.':
+        if second_line == "Overloaded function.":
             # we do have overloaded functions
             overloaded = True
 
     if overloaded:
-        imports['overload'] = 'typing'
+        imports["overload"] = "typing"
         cnt = 1
         for line in islice(docstr_lines, 2, None):
             line = line.strip()
-            prefix = str(cnt) + '. '
-            if line.startswith(f'{prefix}{name}('):
+            prefix = str(cnt) + ". "
+            if line.startswith(f"{prefix}{name}("):
                 # this is a overload function definition line
-                output.append('@overload')
-                output.append(process_function_def(name, f'def {line[len(prefix):]}: ...',
-                                                   self_var, cls_name, imports))
+                output.append("@overload")
+                output.append(
+                    process_function_def(
+                        name, f"def {line[len(prefix):]}: ...", self_var, cls_name, imports
+                    )
+                )
                 cnt += 1
 
     else:
-        output.append(process_function_def(name, f'def {first_line}: ...', self_var,
-                                           cls_name, imports))
+        output.append(
+            process_function_def(name, f"def {first_line}: ...", self_var, cls_name, imports)
+        )
 
 
-def process_function_def(name: str,
-                         declaration: str,
-                         self_var: Optional[str],
-                         cls_name: Optional[str],
-                         imports: Dict[str, str],
-                         ) -> str:
+def process_function_def(
+    name: str,
+    declaration: str,
+    self_var: Optional[str],
+    cls_name: Optional[str],
+    imports: Dict[str, str],
+) -> str:
     try:
         func_node = ast.parse(declaration).body[0]
         # parse successful and found content, record all imports
@@ -214,27 +227,28 @@ def process_function_def(name: str,
         pass
 
     # failed to get function stub, try to check for builtin method signature
-    if self_var is not None and name.startswith('__') and name.endswith('__'):
+    if self_var is not None and name.startswith("__") and name.endswith("__"):
         # check if this is a builtin method for a class
         test = check_builtin_sig(name[2:-2], cls_name, self_var)
         if test:
             return test
 
-    imports['Any'] = 'typing'
-    self_arg = self_var + ', ' if self_var else ''
-    return f'def {name}({self_arg}*args: Any, **kwargs: Any) -> Any: ...'
+    imports["Any"] = "typing"
+    self_arg = self_var + ", " if self_var else ""
+    return f"def {name}({self_arg}*args: Any, **kwargs: Any) -> Any: ..."
 
 
-def check_builtin_sig(name: str,
-                      cls_name: str,
-                      self_var: str,
-                      ) -> str:
-    if name in ('int', 'float', 'complex', 'bool'):
-        return f'def __{name}__({self_var}) -> {name}: ...'
-    if name in ('hash', 'sizeof', 'trunc', 'floor', 'ceil'):
-        return f'def __{name}__({self_var}) -> int: ...'
-    if name in ('copy', 'deepcopy'):
-        return f'def __{name}__({self_var}) -> {cls_name}: ...'
-    if name == 'delattr':
-        return f'def __{name}__({self_var}) -> None: ...'
-    return ''
+def check_builtin_sig(
+    name: str,
+    cls_name: str,
+    self_var: str,
+) -> str:
+    if name in ("int", "float", "complex", "bool"):
+        return f"def __{name}__({self_var}) -> {name}: ..."
+    if name in ("hash", "sizeof", "trunc", "floor", "ceil"):
+        return f"def __{name}__({self_var}) -> int: ..."
+    if name in ("copy", "deepcopy"):
+        return f"def __{name}__({self_var}) -> {cls_name}: ..."
+    if name == "delattr":
+        return f"def __{name}__({self_var}) -> None: ..."
+    return ""

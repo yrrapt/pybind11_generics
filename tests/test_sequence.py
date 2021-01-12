@@ -12,12 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.#
 
-from typing import Sequence
-
 import pytest
 
 import pyg_test
-from pyg_test import get_sequence
 
 from .util import do_constructor_test2, do_error_test, do_doc_test_init
 
@@ -37,7 +34,7 @@ class ChildSequence(pyg_test.TestSequence):
 class NewList:
     def __init__(self, data):
         self._data = data
-    
+
     def __getitem__(self, idx: int):
         return self._data[idx]
 
@@ -60,7 +57,7 @@ fail_data = [
 ]
 
 doc_data = [
-    (pyg_test.TestSequence, 'Sequence[int]'),
+    (pyg_test.TestSequence, "Sequence[int]"),
 ]
 
 

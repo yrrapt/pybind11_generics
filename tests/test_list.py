@@ -19,12 +19,13 @@ from pyg_test import get_list, ListHolder, Animal
 
 from .util import do_constructor_test, do_error_test, do_doc_test
 
+
 class Dog(Animal):
     def __init__(self, name):
         Animal.__init__(self, name)
 
     def go(self, n_times):
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
 
 class Husky(Dog):
@@ -32,7 +33,7 @@ class Husky(Dog):
         Dog.__init__(self, name)
 
     def go(self, n_times):
-        return 'woof ' * n_times 
+        return "woof " * n_times
 
 
 class ChildList(pyg_test.TestList):
@@ -59,7 +60,7 @@ fail_data = [
 ]
 
 doc_data = [
-    (pyg_test.TestList, 'List[int]'),
+    (pyg_test.TestList, "List[int]"),
 ]
 
 
@@ -106,10 +107,10 @@ def test_virtual():
     dog = Dog("Doggo")
     lily = Husky("Lily")
 
-    assert(prime.go(1) == '')
-    assert(lily.go(2) == 'woof woof ')
-    assert(prime.command(2) == "Prime: ")
-    assert(lily.command(3) == "Lily: woof woof woof ")
+    assert prime.go(1) == ""
+    assert lily.go(2) == "woof woof "
+    assert prime.command(2) == "Prime: "
+    assert lily.command(3) == "Lily: woof woof woof "
 
     with pytest.raises(NotImplementedError):
         dog.go(3)

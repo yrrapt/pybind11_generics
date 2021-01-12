@@ -1,6 +1,46 @@
 #!/bin/env python
-# Author: Eric Chang
-# Date: July 24th, 2018
+# SPDX-License-Identifier: BSD-3-Clause AND Apache-2.0
+# Copyright 2018 Regents of the University of California
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Copyright 2019 Blue Cheetah Analog Design Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 """The ycmd configuration script.
 
@@ -8,17 +48,19 @@ This file is used by ycmd to find compilation flags for a file.  It is based on 
 2017 and modified on top of that.
 """
 
+from typing import Dict
+
 import os
 
 import ycm_core
 
-default_flags = ['-x', 'c++', '-Wall', '-Wextra', '-Werror', '-std=c++17']
+default_flags = ["-x", "c++", "-Wall", "-Wextra", "-Werror", "-std=c++17"]
 
-cpp_source_extensions = {'.cpp', '.cxx', '.cc', '.c', '.m', '.mm'}
+cpp_source_extensions = {".cpp", ".cxx", ".cc", ".c", ".m", ".mm"}
 
-header_file_extensions = {'.h', '.H', '.hxx', '.hpp', '.hh'}
+header_file_extensions = {".h", ".H", ".hxx", ".hpp", ".hh"}
 
-completion_database = {}
+completion_database: Dict[str, ycm_core.CompilationDatabase] = {}
 
 
 def FlagsForFile(filename, **_):
@@ -36,7 +78,7 @@ def FlagsForFile(filename, **_):
 
     Note 1: This function is only called by ycmd if no flags have been loaded for the file. Once
     flags are loaded it is not called again. Or at least that appears to be the behavior.
-    
+
     Note 2: If precompiled headers are not working then the libclang used by ycmd is different than
     the system libclang. The solution seems to be setting ycmd to use the system libclang.
 
@@ -44,8 +86,7 @@ def FlagsForFile(filename, **_):
     # print_log('getting flags for file: {}'.format(filename))
     fdir, fname = os.path.split(filename)
     # check existing database in cache
-    ddir, db = next((ddb for ddb in completion_database.items() if ddb[0] in fdir),
-                    (None, None))
+    ddir, db = next((ddb for ddb in completion_database.items() if ddb[0] in fdir), (None, None))
 
     if ddir is None:
         # database not in cache, try to find it.
@@ -58,7 +99,7 @@ def FlagsForFile(filename, **_):
         # found database, update cache
         # print_log('Adding database to cache')
         completion_database[ddir] = db
-    # print_log('Database at: {}'.format(ddir))  
+    # print_log('Database at: {}'.format(ddir))
 
     # find compilation info for this file
     # print_log('Try to get compilation flag from database')
@@ -81,9 +122,10 @@ def FlagsForFile(filename, **_):
 
     # return compilation flags
     # print_log('Flags found: {}'.format(compilation_info.compiler_flags_))
-    return {'flags': list(compilation_info.compiler_flags_),
-            'include_paths_relative_to_dir':
-            compilation_info.compiler_working_dir_}
+    return {
+        "flags": list(compilation_info.compiler_flags_),
+        "include_paths_relative_to_dir": compilation_info.compiler_working_dir_,
+    }
 
 
 def FindCompilationDatabaseAndDir(fdir, fname):
@@ -103,15 +145,13 @@ def FindCompilationDatabaseAndDir(fdir, fname):
 
 
 def GetDefaultFlags(fdir):
-    """Returns the default compilation flags.
-    """
-    return {'flags': list(default_flags),
-            'include_paths_relative_to_dir': fdir}
+    """Returns the default compilation flags."""
+    return {"flags": list(default_flags), "include_paths_relative_to_dir": fdir}
 
 
 def GetCompilationInfoForFile(fdir, fname, ddir, db, use_default_for_header=False):
     """The compilation information from the database.
-    
+
     The compilation_commands.json file generated by CMake does not have entries for header files. So
     we do our best by asking the db for flags for a corresponding source file, if any. If one
     exists, the flags for that file should be good enough.
@@ -128,7 +168,7 @@ def GetCompilationInfoForFile(fdir, fname, ddir, db, use_default_for_header=Fals
     else:
         # print_log('Is not header, file is: {}'.format(os.path.join(fdir, fname)))
         return db.GetCompilationInfoForFile(os.path.join(fdir, fname))
-    
+
 
 def FindHeaderCompilationInfo(fdir, basename, ddir, db):
     """Try to find compilation info for a header file.
@@ -149,8 +189,8 @@ def FindHeaderCompilationInfo(fdir, basename, ddir, db):
     """
     # print_log('Finding compilation flag for header {} {}'.format(fdir, basename))
     # get source directory
-    parts = fdir.rsplit('include', 1)
-    sdir = 'src'.join(parts)
+    parts = fdir.rsplit("include", 1)
+    sdir = "src".join(parts)
     # print_log('SDIR = {}'.format(sdir))
 
     # search for source file with matching name
@@ -163,7 +203,7 @@ def FindHeaderCompilationInfo(fdir, basename, ddir, db):
 
     # search for any source file
     # print_log('recursive search')
-    return RecursiveCompilationInfoSearch(sdir, ddir, '', db)
+    return RecursiveCompilationInfoSearch(sdir, ddir, "", db)
 
 
 def RecursiveCompilationInfoSearch(cur_dir, stop_dir, exclude_dir, db):
@@ -212,7 +252,7 @@ def RecursiveCompilationInfoSearchDown(cur_dir, exclude_dir, db):
     # recurse in all subdirectories
     for next_dir in sub_dirs:
         if next_dir != exclude_dir:
-            test = RecursiveCompilationInfoSearchDown(os.path.join(cur_dir, next_dir), '', db)
+            test = RecursiveCompilationInfoSearchDown(os.path.join(cur_dir, next_dir), "", db)
             if test is not None:
                 return test
 
@@ -220,5 +260,5 @@ def RecursiveCompilationInfoSearchDown(cur_dir, exclude_dir, db):
 
 
 def print_log(msg):
-    with open('/tmp/ycm-extra-conf.log', 'a') as f:
-        f.write(msg + '\n')
+    with open("/tmp/ycm-extra-conf.log", "a") as f:
+        f.write(msg + "\n")
