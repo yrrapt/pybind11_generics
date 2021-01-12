@@ -26,13 +26,13 @@ test_data = [
 
 fail_data = [
     (pyg_test.TestUnion, TypeError, []),
-    (pyg_test.TestUnion, TypeError, ['hi']),
-    (pyg_test.TestUnion, TypeError, (1, )),
+    (pyg_test.TestUnion, TypeError, ["hi"]),
+    (pyg_test.TestUnion, TypeError, (1,)),
     (pyg_test.TestUnion, TypeError, {3.5: 4.5}),
 ]
 
 doc_data = [
-    (pyg_test.TestUnion, 'Union[str, int, float]'),
+    (pyg_test.TestUnion, "Union[str, int, float]"),
 ]
 
 test_index_data = [

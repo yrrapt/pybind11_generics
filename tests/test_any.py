@@ -33,8 +33,8 @@ fail_data = [
 ]
 
 doc_data = [
-    (pyg_test.TestAnyList, 'List[Any]'),
-    (pyg_test.TestAnyVal, 'Any'),
+    (pyg_test.TestAnyList, "List[Any]"),
+    (pyg_test.TestAnyVal, "Any"),
 ]
 
 

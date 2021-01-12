@@ -27,11 +27,11 @@ test_data = [
 fail_data = [
     (pyg_test.TestOptional, TypeError, ()),
     (pyg_test.TestOptional, TypeError, 3),
-    (pyg_test.TestOptional, TypeError, 'foobar'),
+    (pyg_test.TestOptional, TypeError, "foobar"),
 ]
 
 doc_data = [
-    (pyg_test.TestOptional, 'Optional[List[int]]'),
+    (pyg_test.TestOptional, "Optional[List[int]]"),
 ]
 
 

@@ -50,5 +50,5 @@ target_include_directories(pybind11_generics
   )
 
 if (PYBIND11_GENERICS_TEST)
-  add_subdirectory(src)
+  add_subdirectory(src/pyg_test)
 endif()

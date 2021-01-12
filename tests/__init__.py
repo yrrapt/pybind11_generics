@@ -14,4 +14,4 @@
 
 import pytest
 
-pytest.register_assert_rewrite('tests.util')
+pytest.register_assert_rewrite("tests.util")

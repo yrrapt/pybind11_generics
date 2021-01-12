@@ -42,18 +42,18 @@ fail_data = [
 copy_data = [
     ["in", "out", "VDD", "VSS"],
     ["a", "bc", "dfe"],
-    ['in', 'out', 'VDD', 'VDD', 'VSS'],
+    ["in", "out", "VDD", "VDD", "VSS"],
 ]
 
 
 copy_data_dict = [
-    {'a': 1, 'b': 5, 'def': 7},
+    {"a": 1, "b": 5, "def": 7},
 ]
 
 
 doc_data = [
-    (pyg_test.TestIterableString, 'Iterable[str]'),
-    (pyg_test.TestIterablePair, 'Iterable[Tuple[int, int]]'),
+    (pyg_test.TestIterableString, "Iterable[str]"),
+    (pyg_test.TestIterablePair, "Iterable[Tuple[int, int]]"),
 ]
 
 

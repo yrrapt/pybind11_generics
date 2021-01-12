@@ -32,7 +32,7 @@ test_data = [
 ]
 
 fail_data = [
-    (pyg_test.TestIterString, TypeError, ['a', 'b', 'c']),
+    (pyg_test.TestIterString, TypeError, ["a", "b", "c"]),
     (pyg_test.TestIterString, TypeError, None),
     (pyg_test.TestIterString, TypeError, []),
     (pyg_test.TestIterString, RuntimeError, iter([1, 2, 3])),
@@ -43,8 +43,8 @@ fail_data = [
 ]
 
 doc_data = [
-    (pyg_test.TestIterString, 'Iterator[str]'),
-    (pyg_test.TestIterPair, 'Iterator[Tuple[int, int]]'),
+    (pyg_test.TestIterString, "Iterator[str]"),
+    (pyg_test.TestIterPair, "Iterator[Tuple[int, int]]"),
 ]
 
 
@@ -72,5 +72,5 @@ def test_error(cls, err, data):
 @pytest.mark.parametrize("cls,type_str", doc_data)
 def test_doc(cls, type_str):
     """Check object has correct doc string."""
-    method_name_sig = ('get_iter', 'get_iter(self) -> {}')
+    method_name_sig = ("get_iter", "get_iter(self) -> {}")
     do_doc_test(cls, type_str, method_name_sig=method_name_sig)

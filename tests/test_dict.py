@@ -20,19 +20,19 @@ from .util import do_constructor_test, do_error_test, do_doc_test
 
 test_data = [
     (pyg_test.TestDict, {}),
-    (pyg_test.TestDict, {'hi': 1, 'bye': 2}),
-    (pyg_test.TestDict, {'hi': 3, 'foo': 2, 'bar': -1}),
+    (pyg_test.TestDict, {"hi": 1, "bye": 2}),
+    (pyg_test.TestDict, {"hi": 3, "foo": 2, "bar": -1}),
 ]
 
 fail_data = [
-    (pyg_test.TestDict, TypeError, [('hi', 2)]),
-    (pyg_test.TestDict, RuntimeError, {'hi': 1.5}),
+    (pyg_test.TestDict, TypeError, [("hi", 2)]),
+    (pyg_test.TestDict, RuntimeError, {"hi": 1.5}),
     (pyg_test.TestDict, RuntimeError, {1: 1}),
-    (pyg_test.TestDict, RuntimeError, {1: 'bye'}),
+    (pyg_test.TestDict, RuntimeError, {1: "bye"}),
 ]
 
 doc_data = [
-    (pyg_test.TestDict, 'Dict[str, int]'),
+    (pyg_test.TestDict, "Dict[str, int]"),
 ]
 
 

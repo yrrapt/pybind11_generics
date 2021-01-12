@@ -43,7 +43,6 @@ class PkgClsParser(ast.NodeVisitor):
         self.class_name = ""
         self.package_name = ""
 
-    # noinspection PyPep8Naming
     def visit_Attribute(self, node: ast.Attribute) -> None:
         if self.class_name:
             self._modules.append(node.attr)
@@ -51,7 +50,6 @@ class PkgClsParser(ast.NodeVisitor):
             self.class_name = node.attr
         self.visit(node.value)
 
-    # noinspection PyPep8Naming
     def visit_Name(self, node: ast.Name) -> None:
         self._modules.append(node.id)
         self.package_name = ".".join(reversed(self._modules))
@@ -66,7 +64,6 @@ class ImportsParser(ast.NodeVisitor):
         self._imports = imports
         self.replacements = {}
 
-    # noinspection PyPep8Naming
     def visit_Str(self, node: ast.Str) -> None:
         """This method is here because type annotation could be string"""
         try:
@@ -77,7 +74,6 @@ class ImportsParser(ast.NodeVisitor):
         except SyntaxError:
             pass
 
-    # noinspection PyPep8Naming
     def visit_Name(self, node: ast.Name) -> None:
         if node.id in typing_imports:
             self._imports[node.id] = "typing"
@@ -85,7 +81,6 @@ class ImportsParser(ast.NodeVisitor):
             # Numpy array support
             self._imports["ndarray"] = "numpy"
 
-    # noinspection PyPep8Naming
     def visit_Attribute(self, node: ast.Attribute) -> None:
         pkg_cls_parser = PkgClsParser()
         pkg_cls_parser.visit(node)
@@ -94,7 +89,6 @@ class ImportsParser(ast.NodeVisitor):
         self._imports[cls_name] = pkg_name
         self.replacements[pkg_name + "." + cls_name] = cls_name
 
-    # noinspection PyPep8Naming
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         # only visit arguments and return type annotation since we just want
         # to get the names/attributes in type annotations

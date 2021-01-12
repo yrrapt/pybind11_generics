@@ -31,14 +31,14 @@ fail_data = [
     (pyg_test.TestTuplePair, TypeError, [1, 2.0]),
     (pyg_test.TestTuplePair, TypeError, (1, 2.0, 3)),
     (pyg_test.TestTuplePair, TypeError, (1,)),
-    (pyg_test.TestTupleTuple, TypeError, [1, 2.5, 'foobar']),
-    (pyg_test.TestTupleTuple, RuntimeError, (1.5, 2.5, 'foobar')),
-    (pyg_test.TestTupleTuple, TypeError, (1, 2, 'foobar', 'baz')),
+    (pyg_test.TestTupleTuple, TypeError, [1, 2.5, "foobar"]),
+    (pyg_test.TestTupleTuple, RuntimeError, (1.5, 2.5, "foobar")),
+    (pyg_test.TestTupleTuple, TypeError, (1, 2, "foobar", "baz")),
 ]
 
 doc_data = [
-    (pyg_test.TestTuplePair, 'Tuple[int, float]'),
-    (pyg_test.TestTupleTuple, 'Tuple[int, float, str]'),
+    (pyg_test.TestTuplePair, "Tuple[int, float]"),
+    (pyg_test.TestTupleTuple, "Tuple[int, float, str]"),
 ]
 
 
