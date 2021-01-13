@@ -16,7 +16,7 @@
 """This package provides classes for building pybind11 extensions.
 """
 
-from typing import Optional
+from typing import Sequence, Dict, Any
 
 import os
 import re
@@ -32,19 +32,28 @@ from setuptools.command.build_ext import build_ext
 
 class CMakePyBind11Extension(Extension):
     def __init__(self, name: str, sourcedir: str = ".") -> None:
-        Extension.__init__(self, name, sources=[])
+        super().__init__(name, sources=[])
         self.sourcedir = str(Path(sourcedir).resolve())
 
 
 class CMakePyBind11Build(build_ext):
-    user_options = build_ext.user_options
-    user_options.append(("build-type=", None, "CMake build type"))
-    user_options.append(("build-log=", "", "build message output log"))
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        # get build parameters from environment variables
+        self.build_type: str = os.environ.get("PYBIND11EXT_BUILD_TYPE", "Debug")
+        self.build_log: str = os.environ.get("PYBIND11EXT_BUILD_LOG", "")
 
     def initialize_options(self) -> None:
-        build_ext.initialize_options(self)
-        self.build_type: str = "Debug"
-        self.build_log: str = ""
+        super().initialize_options()
+
+        # override how self.parallel is set.  Use environment variables instead.
+        self.parallel: int = int(os.environ.get("PYBIND11EXT_BUILD_PARALLEL", 1))
+        if self.parallel < 0:
+            raise ValueError("PYBIND11_BUILD_PARALLEL must be nonnegative.")
+        if self.parallel == 0:
+            test_val = os.cpu_count()
+            self.parallel = 1 if test_val is None else max(test_val // 2, 1)
 
     def run(self) -> None:
         try:
@@ -94,9 +103,7 @@ class CMakePyBind11Build(build_ext):
             build_cmd.append("/m")
 
         # set up parallel build arguments
-        num_workers = self._get_num_workers()
-        self._log(f"[{ext.name}] parallel={num_workers}")
-        build_cmd.append(f"-j{num_workers}")
+        build_cmd.append(f"-j{self.parallel}")
 
         # run CMake
         Path(self.build_temp).mkdir(parents=True, exist_ok=True)
@@ -118,8 +125,6 @@ class CMakePyBind11Build(build_ext):
         # Add an empty line for cleaner output
 
     def _log(self, msg: str, error: bool = False) -> None:
-        print(f"build log is: {self.build_log}, parallel is: {self.parallel}")
-        raise ValueError("oops")
         if self.build_log:
             with open(self.build_log, "a") as f:
                 if error:
@@ -127,12 +132,14 @@ class CMakePyBind11Build(build_ext):
                 f.write(msg)
                 f.write("\n")
 
-    def _get_num_workers(self) -> int:
-        workers: Optional[int] = self.parallel
-        if workers is None:
-            return 1
-        elif workers == 0:
-            workers = os.cpu_count()  # may return None
-            return 1 if workers is None else max(workers // 2, 1)
-        else:
-            return workers
+
+def update_setup_kwargs(
+    setup_kwargs: Dict[str, Any], pkg_name: str, ext_list: Sequence[str]
+) -> None:
+    extensions = [CMakePyBind11Extension(f"{pkg_name}.{ext_name}") for ext_name in ext_list]
+
+    setup_kwargs.update(
+        ext_modules=extensions,
+        cmdclass={"build_ext": CMakePyBind11Build},
+        zip_safe=False,
+    )
