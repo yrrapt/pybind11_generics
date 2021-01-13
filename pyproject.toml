@@ -1,18 +1,19 @@
+[build-system]
+requires = ["poetry_core>=1.0.0", "wheel"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
-name = "pybind11_stubgen"
-version = "0.1.0"
-description = "A package that generates python stub files for pybind11 modules."
+name = "pybind11_utils"
+version = "1.0.0"
+description = "Python utilties for building pybind11 extensions."
 license = "Apache-2.0"
-authors = ["Eric Chang <pkerichang@gmail.com>"]
+authors = ["Eric Chang <info@bcanalog.com>"]
+readme = "README.md"
 packages = [
-    { include = "pybind11_stubgen", from = "src" },
+    { include = "pybind11_utils", from = "src" },
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-
-[tool.poetry.dev-dependencies]
-
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+python = ">=3.7"
+packaging = ">=20"
+setuptools = ">=46"

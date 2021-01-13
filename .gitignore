@@ -14,6 +14,9 @@ TAGS
 
 # Python related files
 __pycache__
+*.egg-info
+.venv
+poetry.lock
 
 # CMake related files
 _build
