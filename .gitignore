@@ -2,14 +2,7 @@
 *.log
 *~
 
-# IntelliJ IDEA related files
-.idea
-cmake-build-debug
-
-# emacs related files
-TAGS
-
-# C++ related files
+# compiled binaries
 *.so
 
 # Python related files
@@ -18,9 +11,5 @@ __pycache__
 .venv
 poetry.lock
 
-# CMake related files
+# output folders
 _build
-CMakeCache.txt
-CMakeFiles
-Makefile
-cmake_install.cmake
