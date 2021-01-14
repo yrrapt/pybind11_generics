@@ -13,3 +13,6 @@ poetry.lock
 
 # output folders
 _build
+
+# configuration repo
+.bcad_config

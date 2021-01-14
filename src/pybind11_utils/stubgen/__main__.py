@@ -92,7 +92,7 @@ def walk_packages(packages: List[str]) -> Iterator[str]:
             all_packages = pkgutil.walk_packages(
                 path, prefix=package.__name__ + ".", onerror=lambda r: None
             )
-            for importer, qualified_name, ispkg in all_packages:
+            for _, qualified_name, _ in all_packages:
                 yield qualified_name
 
 
@@ -104,7 +104,7 @@ def main() -> None:
 
     options = parse_options()
     if not os.path.isdir(options.output_dir):
-        raise SystemExit('Directory "{}" does not exist'.format(options.output_dir))
+        raise SystemExit('Directory "{options.output_dir}" does not exist')
     for module in options.modules if not options.recursive else walk_packages(options.modules):
         try:
             target = os.path.join(options.output_dir, module.replace(".", "/") + ".pyi")

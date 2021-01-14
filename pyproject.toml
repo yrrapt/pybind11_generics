@@ -19,6 +19,8 @@ packaging = ">=20"
 setuptools = ">=46"
 
 [tool.poetry.dev-dependencies]
+ipython = "*"
+ipdb = "*"
 isort = ">=5"
 pre-commit = ">=2.9"
 flake8 = ">=3.5"
@@ -48,5 +50,4 @@ exclude = '\.git|\.mypy_cache|__pycache__|\.venv|_build'
 [tool.isort]
 profile = "black"
 line_length = 100
-multi_line_output = 5
 skip = [".git", ".mypy_cache", "__pycache__", ".venv", "_build"]
