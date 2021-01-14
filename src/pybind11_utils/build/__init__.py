@@ -16,14 +16,13 @@
 """This package provides classes for building pybind11 extensions.
 """
 
-from typing import Sequence, Dict, Any
-
 import os
-import re
-import sys
 import platform
+import re
 import subprocess as sp
+import sys
 from pathlib import Path
+from typing import Any, Dict, Sequence
 
 from packaging import version
 from setuptools import Extension
@@ -56,8 +55,9 @@ class CMakePyBind11Build(build_ext):
             self.parallel = 1 if test_val is None else max(test_val // 2, 1)
 
     def run(self) -> None:
+        version_check_cmd = ["cmake", "--version"]
         try:
-            out = sp.check_output(["cmake", "--version"])
+            out = sp.check_output(version_check_cmd)
         except OSError:
             err = RuntimeError(
                 "CMake must be installed to build the following extensions: "
@@ -67,7 +67,15 @@ class CMakePyBind11Build(build_ext):
             raise err
 
         if platform.system() == "Windows":
-            cmake_version = re.search(r"version\s*([\d.]+)", out.decode()).group(1)
+            version_match = re.search(r"version\s*([\d.]+)", out.decode())
+            if version_match is None:
+                err = RuntimeError(
+                    "Failed to get cmake version from command: " f"{' '.join(version_check_cmd)}"
+                )
+                self._log(str(err), error=True)
+                raise err
+
+            cmake_version = version_match.group(1)
             if version.parse(cmake_version) < version.parse("3.1.0"):
                 err = RuntimeError("CMake >= 3.1.0 is required on Windows")
                 self._log(str(err), error=True)

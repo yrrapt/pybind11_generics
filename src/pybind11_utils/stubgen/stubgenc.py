@@ -17,13 +17,11 @@
 The public interface is via the mypy.stubgen module.
 """
 
-from typing import List, Tuple, Optional, Mapping, Any, Dict, IO, cast
-
-from types import ModuleType
-
-import os
-import inspect
 import importlib
+import inspect
+from pathlib import Path
+from types import ModuleType
+from typing import IO, Any, Dict, List, Mapping, Optional, Tuple, cast
 
 from .parsedoc import get_prop_type, write_function_stubs
 
@@ -48,8 +46,10 @@ def generate_stub_for_c_module(
     add_header: bool,
 ) -> None:
     module = importlib.import_module(module_name)
-    assert is_c_module(module), "%s is not a C module" % module_name
-    os.makedirs(os.path.dirname(target), exist_ok=True)
+    if not is_c_module(module):
+        raise RuntimeError(f"{module_name} is not a C module")
+
+    Path(target).parent.mkdir(parents=True, exist_ok=True)
 
     # parse all members of this module
     imports = {}  # type: Dict[str, str]
@@ -147,9 +147,7 @@ def process_c_type(
     if (cls_name.startswith("__") and cls_name.endswith("__")) or not is_c_type(obj):
         return False
 
-    # typeshed gives obj.__dict__ the not quite correct type Dict[str, Any]
-    # (it could be a mappingproxy!), which makes mypyc mad, so obfuscate it.
-    obj_dict = getattr(obj, "__dict__")  # type: Mapping[str, Any]
+    obj_dict: Mapping[str, Any] = obj.__dict__
 
     # parse all members of this class
     methods = []  # type: List[str]
@@ -256,8 +254,8 @@ def is_c_property(obj: object) -> bool:
     return inspect.isdatadescriptor(obj) and hasattr(obj, "fget")
 
 
-def is_c_property_readonly(prop: object) -> bool:
-    return getattr(prop, "fset") is None
+def is_c_property_readonly(prop: Any) -> bool:
+    return prop.fset is None
 
 
 def is_c_type(obj: object) -> bool:
@@ -265,9 +263,11 @@ def is_c_type(obj: object) -> bool:
 
 
 def is_c_module(module: ModuleType) -> bool:
-    return "__file__" not in module.__dict__ or os.path.splitext(module.__dict__["__file__"])[
-        -1
-    ] in [".so", ".pyd"]
+    fname = module.__dict__.get("__file__", None)
+    if fname is None:
+        return True
+    module_ext = Path(fname).suffix
+    return module_ext == ".so" or module_ext == ".pyd"
 
 
 def method_name_sort_key(name: str) -> Tuple[int, str]:

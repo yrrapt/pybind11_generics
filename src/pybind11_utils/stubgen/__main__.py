@@ -14,14 +14,13 @@
 
 """Generate python stub files for pybind11 modules."""
 
-from typing import List, Iterator
-
-import os
-import sys
-import inspect
-import pkgutil
 import argparse
 import importlib
+import inspect
+import os
+import pkgutil
+import sys
+from typing import Iterator, List
 
 from .stubgenc import generate_stub_for_c_module, is_c_module
 
@@ -50,7 +49,7 @@ def parse_options() -> argparse.Namespace:
         dest="output_dir",
         type=str,
         default=out_dir_default,
-        help='The output folder (defaults to "{}").'.format(out_dir_default),
+        help=f'The output folder (defaults to "{out_dir_default}").',
     )
     parser.add_argument(
         "modules", nargs="*", type=str, help="pybind11 modules to generate stubs for."

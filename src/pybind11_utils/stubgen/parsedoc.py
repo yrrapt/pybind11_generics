@@ -14,10 +14,9 @@
 
 """This module handles parsing type hinting information from pybind11 docstrings."""
 
-from typing import Dict, Optional, List
-
 import ast
-from itertools import islice
+from itertools import chain, islice
+from typing import Dict, List, Optional
 
 # list of classes we need to import from typing package if present
 typing_imports = (
@@ -39,7 +38,7 @@ class PkgClsParser(ast.NodeVisitor):
     def __init__(self) -> None:
         ast.NodeVisitor.__init__(self)
 
-        self._modules = []
+        self._modules: List[str] = []
         self.class_name = ""
         self.package_name = ""
 
@@ -62,7 +61,7 @@ class ImportsParser(ast.NodeVisitor):
         ast.NodeVisitor.__init__(self)
 
         self._imports = imports
-        self.replacements = {}
+        self.replacements: Dict[str, str] = {}
 
     def visit_Str(self, node: ast.Str) -> None:
         """This method is here because type annotation could be string"""
@@ -99,12 +98,10 @@ class ImportsParser(ast.NodeVisitor):
 
     def visit_arguments(self, node: ast.arguments) -> None:
         # only visit arguments and not default values
-        if node.args is not None:
-            self.generic_visit(node.args)
+        for arg in chain(node.posonlyargs, node.args, node.kwonlyargs):
+            self.generic_visit(arg)
         if node.vararg is not None:
             self.visit(node.vararg)
-        if node.kwonlyargs is not None:
-            self.generic_visit(node.kwonlyargs)
         if node.kwarg is not None:
             self.visit(node.kwarg)
 
@@ -234,7 +231,7 @@ def process_function_def(
 
 def check_builtin_sig(
     name: str,
-    cls_name: str,
+    cls_name: Optional[str],
     self_var: str,
 ) -> str:
     if name in ("int", "float", "complex", "bool"):
@@ -242,6 +239,8 @@ def check_builtin_sig(
     if name in ("hash", "sizeof", "trunc", "floor", "ceil"):
         return f"def __{name}__({self_var}) -> int: ..."
     if name in ("copy", "deepcopy"):
+        if not cls_name:
+            raise ValueError("cls_name empty or unspecified.")
         return f"def __{name}__({self_var}) -> {cls_name}: ..."
     if name == "delattr":
         return f"def __{name}__({self_var}) -> None: ..."

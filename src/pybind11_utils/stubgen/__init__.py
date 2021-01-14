@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 
-"""This package creates python stub file for pybind11 extensions. 
+"""This package creates python stub file for pybind11 extensions.
 
 This stub generation script parses the docstring of methods/properties in a pybind11
 module in order to get type information.  I'm using my fork of the pybind11 library,

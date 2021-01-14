@@ -1,5 +1,9 @@
 [flake8]
 max-line-length = 100
 exclude =
+    .git,
+    .venv,
+    _build,
     __pycache__,
+    .mypy_cache,
     pybind11
