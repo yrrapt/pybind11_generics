@@ -3,23 +3,17 @@ cmake_minimum_required(VERSION 3.9)
 
 project(pybind11_generics)
 
-# Check if we are building this project as top level
-set(PYBIND11_GENERICS_MASTER_PROJECT OFF)
-if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(PYBIND11_GENERICS_MASTER_PROJECT ON)
-endif()
-
-option(PYBIND11_GENERICS_TEST "Build pybind11_generics test suite?"
-  ${PYBIND11_GENERICS_MASTER_PROJECT})
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# control compiler warnings
-add_compile_options(-Wall)
-# add_compile_options(-Wno-delete-non-virtual-dtor)
-# add_compile_options(-Wno-logical-op-parentheses)
-# add_compile_options(-Wno-new-returns-null)
+# set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# set compile options
+add_compile_options(
+  "-fmax-errors=2" "-Wall" "-pedantic"
+  "$<$<CONFIG:DEBUG>:-fno-omit-frame-pointer>"
+)
+
 # set optimzation level for release
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # generate compilation commands file for emacs
@@ -48,7 +42,3 @@ target_include_directories(pybind11_generics
   INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
-
-if (PYBIND11_GENERICS_TEST)
-  add_subdirectory(src/pyg_test)
-endif()
