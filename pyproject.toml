@@ -19,8 +19,7 @@ packaging = ">=20"
 setuptools = ">=46"
 
 [tool.poetry.dev-dependencies]
-ipython = "*"
-ipdb = "*"
+ipython = ">=7"
 isort = ">=5"
 pre-commit = ">=2.9"
 flake8 = ">=3.5"
