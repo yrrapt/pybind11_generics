@@ -8,11 +8,6 @@
 # Python related files
 __pycache__
 *.egg-info
-.venv
-poetry.lock
 
 # output folders
 _build
-
-# configuration repo
-.bcad_config

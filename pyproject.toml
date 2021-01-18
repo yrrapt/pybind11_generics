@@ -1,44 +1,6 @@
 [build-system]
-requires = ["poetry_core>=1.0.0", "wheel"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-name = "pybind11_utils"
-version = "1.0.0"
-description = "Python utilties for building pybind11 extensions."
-license = "Apache-2.0"
-authors = ["Eric Chang <info@bcanalog.com>"]
-readme = "README.md"
-packages = [
-    { include = "pybind11_utils", from = "src" },
-]
-
-[tool.poetry.dependencies]
-python = "^3.9"
-packaging = ">=20"
-setuptools = ">=46"
-
-[tool.poetry.dev-dependencies]
-ipython = ">=7"
-isort = ">=5"
-pre-commit = ">=2.9"
-flake8 = ">=3.5"
-flake8-bugbear = "*"
-flake8-builtins = "*"
-flake8-comprehensions = "*"
-flake8-mutable = "*"
-flake8-pytest-style = "*"
-flake8-use-fstring = "*"
-flake8-copyright = "*"
-
-# NOTE: grab this mypy version to resolve issue #8824
-[tool.poetry.dev-dependencies.mypy]
-git = "https://github.com/python/mypy.git"
-rev = "e9edcb957f341dcf7a14bb7b7acfd4186fb1248b"
-
-[tool.poetry.dev-dependencies.black]
-version = ">=20.8b0"
-allow-prereleases = true
+requires = [ "setuptools>=51", "wheel>=0.36",]
+build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 100
