@@ -19,9 +19,13 @@ The public interface is via the mypy.stubgen module.
 
 import importlib
 import inspect
+import runpy
+import sys
 from pathlib import Path
 from types import ModuleType
 from typing import IO, Any, Dict, List, Mapping, Optional, Tuple, cast
+
+import isort
 
 from .parsedoc import get_prop_type, write_function_stubs
 
@@ -52,10 +56,10 @@ def generate_stub_for_c_module(module_name: str, output_path: Path) -> Path:
     target.parent.mkdir(parents=True, exist_ok=True)
 
     # parse all members of this module
-    imports = {}  # type: Dict[str, str]
-    types = []  # type: List[List[str]]
-    variables = []  # type: List[str]
-    functions = []  # type: List[str]
+    imports: Dict[str, str] = {}
+    types: List[List[str]] = []
+    variables: List[str] = []
+    functions: List[str] = []
     for name, obj in sorted(module.__dict__.items(), key=lambda x: x[0]):
         if process_c_function(name, obj, functions, imports):
             pass
@@ -64,26 +68,40 @@ def generate_stub_for_c_module(module_name: str, output_path: Path) -> Path:
         else:
             process_c_var(name, obj, variables, imports)
 
+    ndarray_module = ""
+    import_reformat: Dict[str, List[str]] = {}
+    for c_name, m_name in imports.items():
+        if m_name != module_name:
+            if c_name == "ndarray":
+                # NOTE: numpy.ndarray is special because we need to alias
+                ndarray_module = m_name
+            else:
+                cur_list = import_reformat.get(m_name, None)
+                if cur_list is None:
+                    import_reformat[m_name] = [c_name]
+                else:
+                    cur_list.append(c_name)
+
     # write output to file
     with open(target, "w") as file:
         write_header(file, module_name)
+        file.write("from __future__ import annotations\n\n")
 
-        if imports:
-            for c_name, m_name in sorted(imports.items(), key=lambda x: x[1]):
-                if m_name != module_name:
-                    # a class in a different module, write import statement
-                    if c_name == "ndarray":
-                        # numpy array alias
-                        file.write(f"from {m_name} import ndarray as array\n")
-                    else:
-                        file.write(f"from {m_name} import {c_name}\n")
+        if import_reformat or ndarray_module:
+            for m_name, cls_list in sorted(import_reformat.items(), key=lambda x: x[0]):
+                file.write(f"from {m_name} import {','.join(sorted(cls_list))}\n")
+
+            if ndarray_module:
+                # numpy array alias
+                file.write(f"from {ndarray_module} import ndarray as array\n")
+
             file.write("\n")
+
         if variables:
             for line in variables:
                 file.write(line)
                 file.write("\n")
-            file.write("\n")
-            file.write("\n")
+            file.write("\n\n")
         else:
             # if no variables section, add extra blank line so import/variable
             # section is 2 spaces from class/function section
@@ -91,15 +109,23 @@ def generate_stub_for_c_module(module_name: str, output_path: Path) -> Path:
 
         for line in functions:
             file.write(line)
-            file.write("\n")
-            file.write("\n")
-            file.write("\n")
+            file.write("\n\n\n")
         for cls_lines in types:
             for line in cls_lines:
                 file.write(line)
                 file.write("\n")
-            file.write("\n")
-            file.write("\n")
+            file.write("\n\n")
+
+    # Run isort/black to format file
+    isort.file(target)
+
+    # NOTE: use runpy hack as black doesn't have public API yet
+    old_argv = sys.argv[1:]
+    try:
+        sys.argv[1:] = [str(target)]
+        runpy.run_module("black", run_name="__main__", alter_sys=True)
+    finally:
+        sys.argv[1:] = old_argv
 
     return target
 
