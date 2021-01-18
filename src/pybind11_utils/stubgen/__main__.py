@@ -17,14 +17,12 @@
 import argparse
 import importlib
 import inspect
-import os
 import pkgutil
 import sys
+from pathlib import Path
 from typing import Iterator, List
 
 from .stubgenc import generate_stub_for_c_module, is_c_module
-
-out_dir_default = "out"
 
 
 def parse_options() -> argparse.Namespace:
@@ -44,20 +42,18 @@ def parse_options() -> argparse.Namespace:
         help="ignore errors during stub generation.",
     )
     parser.add_argument(
-        "-o",
-        "--output",
         dest="output_dir",
         type=str,
-        default=out_dir_default,
-        help=f'The output folder (defaults to "{out_dir_default}").',
+        help="Stub output directory.",
     )
     parser.add_argument(
-        "modules", nargs="*", type=str, help="pybind11 modules to generate stubs for."
+        "modules",
+        nargs="*",
+        type=str,
+        help="pybind11 modules to generate stubs for.",
     )
 
     args = parser.parse_args()
-    # Create the output folder if it doesn't already exist.
-    os.makedirs(args.output_dir, exist_ok=True)
     return args
 
 
@@ -97,19 +93,15 @@ def walk_packages(packages: List[str]) -> Iterator[str]:
 
 
 def main() -> None:
-    # Make sure that the current directory is in sys.path so that
-    # stubgen can be run on packages in the current directory.
-    if "" not in sys.path:
-        sys.path.insert(0, "")
-
     options = parse_options()
-    if not os.path.isdir(options.output_dir):
-        raise SystemExit('Directory "{options.output_dir}" does not exist')
+    output_path = Path(options.output_dir).resolve()
+    if not output_path.is_dir():
+        raise SystemExit(f"Cannot find directory: {options.root_dir}")
+
     for module in options.modules if not options.recursive else walk_packages(options.modules):
         try:
-            target = os.path.join(options.output_dir, module.replace(".", "/") + ".pyi")
-            generate_stub_for_c_module(module_name=module, target=target, add_header=True)
-            print("Created " + target)
+            target = generate_stub_for_c_module(module, output_path)
+            print(f"Created stub: {target}")
         except Exception as e:
             if not options.ignore_errors:
                 raise e
