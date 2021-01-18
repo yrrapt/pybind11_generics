@@ -1,0 +1,3 @@
+standalone: true
+wrap: auto
+columns: 100
