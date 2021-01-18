@@ -40,16 +40,16 @@ skip_attrs = (
 )
 
 
-def generate_stub_for_c_module(
-    module_name: str,
-    target: str,
-    add_header: bool,
-) -> None:
+def generate_stub_for_c_module(module_name: str, output_path: Path) -> Path:
+
     module = importlib.import_module(module_name)
     if not is_c_module(module):
         raise RuntimeError(f"{module_name} is not a C module")
 
-    Path(target).parent.mkdir(parents=True, exist_ok=True)
+    hier_list = module_name.split(".")
+    hier_list[-1] += ".pyi"
+    target = output_path.joinpath(*hier_list)
+    target.parent.mkdir(parents=True, exist_ok=True)
 
     # parse all members of this module
     imports = {}  # type: Dict[str, str]
@@ -66,8 +66,7 @@ def generate_stub_for_c_module(
 
     # write output to file
     with open(target, "w") as file:
-        if add_header:
-            write_header(file, module_name)
+        write_header(file, module_name)
 
         if imports:
             for c_name, m_name in sorted(imports.items(), key=lambda x: x[1]):
@@ -101,6 +100,8 @@ def generate_stub_for_c_module(
                 file.write("\n")
             file.write("\n")
             file.write("\n")
+
+    return target
 
 
 def process_c_var(

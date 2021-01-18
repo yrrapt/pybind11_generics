@@ -22,11 +22,13 @@ import re
 import subprocess as sp
 import sys
 from pathlib import Path
-from typing import Any, Dict, Sequence
+from typing import Any
 
 from packaging import version
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
+
+from ..stubgen.stubgenc import generate_stub_for_c_module
 
 
 class CMakePyBind11Extension(Extension):
@@ -86,8 +88,11 @@ class CMakePyBind11Build(build_ext):
 
     def build_extension(self, ext: CMakePyBind11Extension) -> None:
         # setup CMake initialization and build commands
-        version = self.distribution.get_version()
-        ext_dir = Path(self.get_ext_fullpath(ext.name)).parent.resolve()
+        ext_fullname = self.get_ext_fullname(ext.name)
+        num_levels = len(ext_fullname.split("."))
+        ext_fullpath = Path(self.get_ext_fullpath(ext.name)).resolve()
+        pkg_root_dir = ext_fullpath.parents[num_levels - 1]
+        ext_dir = ext_fullpath.parent
         init_cmd = [
             "cmake",
             f"-S{ext.sourcedir}",
@@ -115,39 +120,34 @@ class CMakePyBind11Build(build_ext):
 
         # run CMake
         Path(self.build_temp).mkdir(parents=True, exist_ok=True)
-        self._log(f"[{ext.name}] Building {ext.name} version: {version}")
-        self._log(f"[{ext.name}] CMake init command: {' '.join(init_cmd)}")
-        self._log(f"[{ext.name}] CMake build command: {' '.join(build_cmd)}")
+        self._log(f"[{ext_fullname}] CMake init command: {' '.join(init_cmd)}")
+        self._log(f"[{ext_fullname}] CMake build command: {' '.join(build_cmd)}")
 
         if self.build_log:
             with open(self.build_log, "a") as f:
                 sp.check_call(init_cmd, stdout=f, stderr=sp.STDOUT)
                 sp.check_call(build_cmd, stdout=f, stderr=sp.STDOUT)
         else:
-            sp.check_call(init_cmd, stdout=None, stderr=None)
-            sp.check_call(build_cmd, stdout=None, stderr=None)
+            sp.check_call(init_cmd, stdout=None, stderr=sp.STDOUT)
+            sp.check_call(build_cmd, stdout=None, stderr=sp.STDOUT)
 
-        # generate stubs
-        # subprocess.check_call(["./gen_stubs.sh"])
-
-        # Add an empty line for cleaner output
+        # generate python stub file
+        # NOTE: add pkg_root_dir to sys.path to make sure module import works.
+        sys.path.insert(0, str(pkg_root_dir))
+        try:
+            generate_stub_for_c_module(ext_fullname, pkg_root_dir)
+        except Exception as err:
+            self._log(str(err), error=True)
+            raise err
+        finally:
+            del sys.path[0]
 
     def _log(self, msg: str, error: bool = False) -> None:
+        if error:
+            msg = "[ERROR] " + msg
+
+        print(msg)
         if self.build_log:
             with open(self.build_log, "a") as f:
-                if error:
-                    f.write("[ERROR] ")
                 f.write(msg)
                 f.write("\n")
-
-
-def update_setup_kwargs(
-    setup_kwargs: Dict[str, Any], pkg_name: str, ext_list: Sequence[str]
-) -> None:
-    extensions = [CMakePyBind11Extension(f"{pkg_name}.{ext_name}") for ext_name in ext_list]
-
-    setup_kwargs.update(
-        ext_modules=extensions,
-        cmdclass={"build_ext": CMakePyBind11Build},
-        zip_safe=False,
-    )
