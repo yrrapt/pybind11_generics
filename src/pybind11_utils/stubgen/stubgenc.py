@@ -20,8 +20,8 @@ The public interface is via the mypy.stubgen module.
 
 import importlib
 import inspect
-import runpy
-import sys
+import shutil
+import subprocess
 from pathlib import Path
 from types import ModuleType
 from typing import IO, Any, Dict, List, Mapping, Optional, Tuple, cast
@@ -120,13 +120,10 @@ def generate_stub_for_c_module(module_name: str, output_path: Path) -> Path:
     # Run isort/black to format file
     isort.file(target)
 
-    # NOTE: use runpy hack as black doesn't have public API yet
-    old_argv = sys.argv[1:]
-    try:
-        sys.argv[1:] = [str(target)]
-        runpy.run_module("black", run_name="__main__", alter_sys=True)
-    finally:
-        sys.argv[1:] = old_argv
+    if shutil.which("black") is None:
+        raise RuntimeError('Cannot find "black" executable.')
+
+    subprocess.check_call(["black", str(target)])
 
     return target
 
