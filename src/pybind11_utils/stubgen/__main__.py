@@ -15,50 +15,43 @@
 
 """Generate python stub files for pybind11 modules."""
 
-import argparse
 import importlib
 import inspect
 import pkgutil
 import sys
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator, Sequence
+
+import click
 
 from .stubgenc import generate_stub_for_c_module, is_c_module
 
 
-def parse_options() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate Python stub files for pybind11 modules.")
-    parser.add_argument(
-        "--recursive",
-        dest="recursive",
-        action="store_true",
-        default=False,
-        help="generate stub files for submodules as well.",
-    )
-    parser.add_argument(
-        "--ignore-errors",
-        dest="ignore_errors",
-        action="store_true",
-        default=False,
-        help="ignore errors during stub generation.",
-    )
-    parser.add_argument(
-        dest="output_dir",
-        type=str,
-        help="Stub output directory.",
-    )
-    parser.add_argument(
-        "modules",
-        nargs="*",
-        type=str,
-        help="pybind11 modules to generate stubs for.",
-    )
+@click.command(context_settings={"help_option_names": ["-h", "--help"]})
+@click.argument("output_dir")
+@click.argument("modules", nargs=-1)
+@click.option("-r", "--recursive", is_flag=True, help="Generate stubs for submodules as well.")
+@click.option("--ignore-errors", is_flag=True, help="Ignore errors during stub generation.")
+def gen_pybind11_stubs(
+    output_dir: str, modules: Sequence[str], recursive: bool, ignore_errors: bool
+) -> None:
+    """Generate Python stubs for pybind11 modules MODULES and output them in OUTPUT_DIR."""
+    output_path = Path(output_dir).resolve()
+    if not output_path.is_dir():
+        raise SystemExit(f"Cannot find directory: {output_dir}")
 
-    args = parser.parse_args()
-    return args
+    for module in walk_packages(modules) if recursive else modules:
+        try:
+            target = generate_stub_for_c_module(module, output_path)
+            print(f"Created stub: {target}")
+        except Exception as e:
+            if not ignore_errors:
+                raise e
+            else:
+                print("Stub generation failed for: ", module, file=sys.stderr)
 
 
-def walk_packages(packages: List[str]) -> Iterator[str]:
+def walk_packages(packages: Sequence[str]) -> Iterator[str]:
     """Iterates through all packages and sub-packages in the given list.
 
     Python packages have a __path__ attribute defined, which pkgutil uses to determine
@@ -93,22 +86,5 @@ def walk_packages(packages: List[str]) -> Iterator[str]:
                 yield qualified_name
 
 
-def main() -> None:
-    options = parse_options()
-    output_path = Path(options.output_dir).resolve()
-    if not output_path.is_dir():
-        raise SystemExit(f"Cannot find directory: {options.root_dir}")
-
-    for module in options.modules if not options.recursive else walk_packages(options.modules):
-        try:
-            target = generate_stub_for_c_module(module, output_path)
-            print(f"Created stub: {target}")
-        except Exception as e:
-            if not options.ignore_errors:
-                raise e
-            else:
-                print("Stub generation failed for: ", module, file=sys.stderr)
-
-
 if __name__ == "__main__":
-    main()
+    gen_pybind11_stubs()
