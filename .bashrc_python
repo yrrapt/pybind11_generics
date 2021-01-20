@@ -4,21 +4,20 @@
 # and also will source a ".bashrc_pypath" file to setup PYTHONPATH
 # if it exists.
 
-# set BCAD_VENV value if not defined
-if [ -z "${BCAD_VENV}" ]; then
-    export BCAD_VENV="/tools/bag3/venv"
+# set BCAD_PY_ROOT value if not defined
+if [ -z "${BCAD_PY_ROOT}" ]; then
+    export BCAD_PY_ROOT="/tools/bag3/pyusr"
 fi
 
-# check that ${BCAD_VENV} is a valid virtualenv
-ACT_FILE="${BCAD_VENV}/bin/activate"
-if ! [ -f "${ACT_FILE}" ]; then
-    echo "[ERROR] ${BCAD_VENV} is not a valid virtualenv." >&2
+# check that BCAD_PY_ROOT is a valid Python installation
+PYTHON_BIN="${BCAD_PY_ROOT}/bin/python"
+if ! [ -x "${PYTHON_BIN}" ]; then
+    echo "[ERROR] ${PYTHON_BIN} is not a valid python executable." >&2
     exit 1
 fi
 
 # update PATH and Python related variables
-export VIRTUAL_ENV="${BCAD_VENV}"
-export PATH="${BCAD_VENV}/bin:${PATH}"
+export PATH="${BCAD_PY_ROOT}/bin:${PATH}"
 unset PYTHONHOME
 PYPATH_FILE=".bashrc_pypath"
 if [ -f "${PYPATH_FILE}" ]; then
