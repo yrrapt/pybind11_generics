@@ -13,7 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Python utilties for building pybind11 extensions.
+"""Python utilties for building C extensions created with pybind11_generics.
+
+pybind11_generics is a C++ library that's forked from pybind11.  This fork
+makes some minor modifications in Python bindings docstring generation and also
+added various C++ classes, so that it is possible to generate typehint stubs for
+C extensions libraries that has fully support of generic classes (such as List[int],
+Dict[str, str], and so on).
+
+This Python library provides various utilties that make packaging pybind11_generics C
+extensions easier, such as a script that generates the stub file, and also classes to
+help package C extensions using setuptools.
 """
 
 __version__ = "0.2.0"
