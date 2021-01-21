@@ -10,7 +10,7 @@ repos:
         name: format_rst
         entry: ./format_rst.sh
         language: system
-        types_or: [rst]
+        types: [rst]
       - id: isort
         name: isort
         entry: python -m isort
