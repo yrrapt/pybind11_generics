@@ -6,9 +6,9 @@ repos:
         entry: clang-format
         language: system
         types_or: [c, c++]
-      - id: format_rst
-        name: format_rst
-        entry: ./format_rst.sh
+      - id: doc8
+        name: doc8
+        entry: python -m doc8 --config .doc8.ini
         language: system
         types: [rst]
       - id: isort
