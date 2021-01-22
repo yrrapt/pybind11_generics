@@ -98,7 +98,6 @@ class CMakePyBind11Build(build_ext):
             f"-S{ext.sourcedir}",
             f"-B{self.build_temp}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={ext_dir}",
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={self.build_type}",
         ]
         build_cmd = [

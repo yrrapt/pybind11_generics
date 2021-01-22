@@ -1,5 +1,6 @@
 
-cmake_minimum_required(VERSION 3.9)
+# Version 3.15 required because of FindPython module.
+cmake_minimum_required(VERSION 3.15)
 
 project(pybind11_generics)
 
@@ -26,6 +27,9 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 # add rpaths to the final install executable
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Call FindPython
+find_package(Python COMPONENTS Development REQUIRED)
 
 # Include pybind11
 add_subdirectory(pybind11)
