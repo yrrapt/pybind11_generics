@@ -119,8 +119,9 @@ class CMakePyBind11Build(build_ext):
 
         # run CMake
         Path(self.build_temp).mkdir(parents=True, exist_ok=True)
-        self._log(f"[{ext_fullname}] CMake init command: {' '.join(init_cmd)}")
-        self._log(f"[{ext_fullname}] CMake build command: {' '.join(build_cmd)}")
+        cmd_sep = "  \\\n  "
+        self._log(f"[{ext_fullname}] CMake init command:\n{cmd_sep.join(init_cmd)}")
+        self._log(f"[{ext_fullname}] CMake build command:\n{' '.join(build_cmd)}")
 
         if self.build_log:
             with open(self.build_log, "a") as f:

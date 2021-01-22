@@ -28,9 +28,6 @@ set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 # add rpaths to the final install executable
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# Call FindPython
-find_package(Python COMPONENTS Development REQUIRED)
-
 # Include pybind11
 add_subdirectory(pybind11)
 
