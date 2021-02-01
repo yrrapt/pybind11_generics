@@ -1,5 +1,6 @@
 
-cmake_minimum_required(VERSION 3.9)
+# Version 3.15 required because of FindPython module.
+cmake_minimum_required(VERSION 3.15)
 
 project(pybind11_generics)
 
