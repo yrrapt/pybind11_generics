@@ -6,29 +6,30 @@ repos:
         entry: clang-format
         language: system
         types_or: [c, c++]
-      - id: format_rst
-        name: format_rst
-        entry: ./format_rst.sh
+      - id: doc8
+        name: doc8
+        entry: python -m doc8 --config .doc8.ini
         language: system
         types: [rst]
       - id: isort
         name: isort
         entry: python -m isort
         language: system
-        types: [python]
+        types_or: [python, pyi]
       - id: black
         name: black
         entry: python -m black
         language: system
-        types: [python]
+        types_or: [python, pyi]
       - id: mypy
         name: mypy
-        entry: python -m mypy
+        entry: python -m mypy --show-error-codes
         language: system
-        types: [python]
+        types_or: [python, pyi]
         exclude: ^\.vscode/
+        require_serial: true
       - id: flake8
         name: flake8
         entry: python -m flake8
         language: system
-        types: [python]
+        types_or: [python, pyi]

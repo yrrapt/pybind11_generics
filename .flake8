@@ -13,13 +13,17 @@
 [flake8]
 copyright-check = True
 # A: flake8-builtins
+# ANN: flake8-annotations
 # B: flake8-bugbear
 # C: flake8-copyright, flake8-comprehensions
 # FS: flake8-use-fstring
-# M: flake8-mutable
 # B902: flake8-bugbear optional warning
 # PT: flake8-pytest-style
-select = A,B,C.E,F,FS,M,PT,W,B902
+select = A,ANN,B,C.E,F,FS,PT,W,B902
+# ignore type annotations on self/cls
+# ignore f-string missing prefix
+# W503 (line break before binary operator) violates PEP8, so we ignore.
+ignore = ANN101,ANN102,FS003,W503
 max-line-length = 100
 per-file-ignores =
   *.pyi: E301, E302, E305, E701, E741, F401, F403, F405, F822

@@ -1,14 +1,17 @@
 [build-system]
-requires = [ "setuptools>=51", "wheel>=0.36",]
+requires = [ "setuptools>=51", "wheel>=0.36", "setuptools_scm[toml]>=5.0" ]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "src/pybind11_generics/_version.py"
 
 [tool.black]
 line-length = 100
-target-version = ["py38"]
-include = '\.pyi?$'
-exclude = '\.git|\.mypy_cache|__pycache__|\.venv|_build'
+target-version = [ "py38",]
+include = "\\.pyi?$"
+exclude = "\\.git|\\.mypy_cache|__pycache__|\\.venv|_build"
 
 [tool.isort]
 profile = "black"
 line_length = 100
-skip = [".git", ".mypy_cache", "__pycache__", ".venv", "_build"]
+skip = [ ".git", ".mypy_cache", "__pycache__", ".venv", "_build",]

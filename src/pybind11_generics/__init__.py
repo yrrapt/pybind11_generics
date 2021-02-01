@@ -26,4 +26,9 @@ extensions easier, such as a script that generates the stub file, and also class
 help package C extensions using setuptools.
 """
 
-__version__ = "0.2.0"
+try:
+    from ._version import version  # type: ignore[import]
+
+    __version__: str = version
+except ImportError:
+    pass
