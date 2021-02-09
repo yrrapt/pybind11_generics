@@ -3,6 +3,9 @@
         100
     ],
     "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.buildDirectory": "${workspaceFolder}/_build",
     "cmake.configureOnOpen": true,
@@ -14,8 +17,6 @@
     "python.linting.flake8Enabled": true,
     "python.linting.pylintEnabled": false,
     "[python]": {
-        "files.trimTrailingWhitespace": true,
-        "files.insertFinalNewline": true,
         "editor.codeActionsOnSave": {
             "source.organizeImports": true
         }
@@ -23,14 +24,6 @@
     "restructuredtext.languageServer.disabled": true,
     "restructuredtext.confPath": "${workspaceFolder}/docs/source",
     "restructuredtext.linter.executablePath": "doc8",
-    "emeraldwalk.runonsave": {
-        "commands": [
-            {
-                "match": "\\.rst$",
-                "cmd": "${workspaceFolder}/format_rst.sh ${file}"
-            }
-        ]
-    },
     "restructuredtext.linter.name": "doc8",
     "restructuredtext.linter.extraArgs": [
         "--config",
