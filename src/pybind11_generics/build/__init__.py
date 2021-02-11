@@ -28,8 +28,6 @@ from packaging import version
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 
-from ..stubgen.stubgenc import generate_stub_for_c_module
-
 
 class CMakePyBind11Extension(Extension):
     def __init__(self, name: str, sourcedir: str = ".") -> None:
@@ -132,18 +130,10 @@ class CMakePyBind11Build(build_ext):
             sp.check_call(build_cmd, stdout=None, stderr=sp.STDOUT)
 
         # generate python stub file
-        # NOTE: add pkg_root_dir to sys.path to make sure module import works.
-        sys.path.insert(0, str(pkg_root_dir))
-        try:
-            generate_stub_for_c_module(ext_fullname, pkg_root_dir)
-        except Exception as err:
-            self._log(
-                str(f"ext_fullname={ext_fullname}, pkg_root_dir={pkg_root_dir}, error:\n{err}"),
-                error=True,
-            )
-            raise err
-        finally:
-            del sys.path[0]
+        # NOTE: use python sub-process so we reload that pakage.
+        sp.check_call(
+            [sys.executable, "-m", "pybind11_generics.stubgen", str(pkg_root_dir), ext_fullname]
+        )
 
     def _log(self, msg: str, error: bool = False) -> None:
         if error:
