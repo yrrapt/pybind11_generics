@@ -137,7 +137,10 @@ class CMakePyBind11Build(build_ext):
         try:
             generate_stub_for_c_module(ext_fullname, pkg_root_dir)
         except Exception as err:
-            self._log(str(err), error=True)
+            self._log(
+                str(f"ext_fullname={ext_fullname}, pkg_root_dir={pkg_root_dir}, error:\n{err}"),
+                error=True,
+            )
             raise err
         finally:
             del sys.path[0]
