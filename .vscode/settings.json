@@ -16,6 +16,7 @@
     "python.linting.mypyArgs": [],
     "python.linting.flake8Enabled": true,
     "python.linting.pylintEnabled": false,
+    "python.languageServer": "Pylance",
     "[python]": {
         "editor.codeActionsOnSave": {
             "source.organizeImports": true
