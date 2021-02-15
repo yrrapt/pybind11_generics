@@ -40,6 +40,8 @@ def gen_pybind11_stubs(
     if not output_path.is_dir():
         raise SystemExit(f"Cannot find directory: {output_dir}")
 
+    # NOTE: add output path to PYTHONPATH so we can import the module.
+    sys.path.insert(0, str(output_path))
     for module in walk_packages(modules) if recursive else modules:
         try:
             target = generate_stub_for_c_module(module, output_path)
