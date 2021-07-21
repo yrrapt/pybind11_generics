@@ -30,9 +30,10 @@ from setuptools.command.build_ext import build_ext
 
 
 class CMakePyBind11Extension(Extension):
-    def __init__(self, name: str, sourcedir: str = ".") -> None:
+    def __init__(self, name: str, *, sourcedir: str = ".", gen_stubs: bool = True) -> None:
         super().__init__(name, sources=[])
         self.sourcedir = str(Path(sourcedir).resolve())
+        self.gen_stubs = gen_stubs
 
 
 class CMakePyBind11Build(build_ext):
@@ -129,11 +130,12 @@ class CMakePyBind11Build(build_ext):
             sp.check_call(init_cmd, stdout=None, stderr=sp.STDOUT)
             sp.check_call(build_cmd, stdout=None, stderr=sp.STDOUT)
 
-        # generate python stub file
-        # NOTE: use python sub-process so we reload that pakage.
-        sp.check_call(
-            [sys.executable, "-m", "pybind11_generics.stubgen", str(pkg_root_dir), ext_fullname]
-        )
+        if ext.gen_stubs:
+            # generate python stub file
+            # NOTE: use python sub-process so we reload that pakage.
+            sp.check_call(
+                [sys.executable, "-m", "pybind11_generics.stubgen", str(pkg_root_dir), ext_fullname]
+            )
 
     def _log(self, msg: str, error: bool = False) -> None:
         if error:
