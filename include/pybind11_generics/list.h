@@ -51,8 +51,8 @@ template <typename T> class List : public list_base {
         }
         return cast_from_handle<value_type>(py::handle(result));
     }
-    const_iterator begin() const { return const_iterator(list_base::begin()); }
-    const_iterator end() const { return const_iterator(list_base::end()); }
+    const_iterator begin() const { return const_iterator(list_base::begin(), list_base::end()); }
+    const_iterator end() const { return const_iterator(list_base::end(), list_base::end()); }
 
     template <class V, IsT<V> = 0> void append(V &&val) const {
         list_base::append(std::forward<V>(val));
@@ -60,7 +60,7 @@ template <typename T> class List : public list_base {
     template <class V, IsT<V> = 0> void push_back(V &&val) {
         list_base::append(std::forward<V>(val));
     }
-    template <class... Args> void emplace_back(Args &&... args) {
+    template <class... Args> void emplace_back(Args &&...args) {
         push_back(value_type(std::forward<Args>(args)...));
     }
     // empty method for compatibility reason

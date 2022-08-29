@@ -26,21 +26,49 @@ namespace py = pybind11;
 
 namespace pybind11_generics {
 
-template <typename K, typename V, typename WrapIter>
-class dict_cast_input_iterator : public cast_input_iterator<std::pair<K, V>, WrapIter> {
-  private:
-    using iter_base = cast_input_iterator<std::pair<K, V>, WrapIter>;
+template <typename K, typename V, typename WrapIter> class dict_cast_input_iterator {
+  public:
+    using difference_type = std::size_t;
+    using iterator_category = std::input_iterator_tag;
+    using value_type = std::pair<K, V>;
+    using reference = const value_type &;
+    using pointer = const value_type *;
+    using It = dict_cast_input_iterator;
+
+  protected:
+    WrapIter iter_, end_;
+    value_type val_;
 
   public:
-    using difference_type = typename iter_base::difference_type;
-    using iterator_category = typename iter_base::iterator_category;
-    using value_type = typename iter_base::value_type;
-    using reference = typename iter_base::reference;
-    using pointer = typename iter_base::pointer;
+    dict_cast_input_iterator() = default;
 
-    using iter_base::iter_base;
+    dict_cast_input_iterator(WrapIter iter, WrapIter end) : iter_(iter), end_(end) {
+        if (iter_ != end_) {
+            val_ = _get_value_from_iter();
+        }
+    }
 
-    value_type operator*() const {
+    friend bool operator==(const It &a, const It &b) { return a.iter_ == b.iter_; }
+    friend bool operator!=(const It &a, const It &b) { return !(a == b); }
+
+    reference operator*() const { return val_; }
+    pointer operator->() const { return &val_; }
+
+    It &operator++() {
+        ++iter_;
+        if (iter_ != end_) {
+            val_ = _get_value_from_iter();
+        }
+        return *this;
+    }
+    It operator++(int) {
+        auto copy = *this;
+        ++(*this);
+        return copy;
+    }
+
+  private:
+    value_type _get_value_from_iter() const {
         auto py_pair = *(this->iter_);
         return std::make_pair(cast_from_handle<K>(py_pair.first),
                               cast_from_handle<V>(py_pair.second));
@@ -95,9 +123,9 @@ template <typename K, typename V> class Dict : public dict_base {
         insert_or_assign_helper(key_obj.ptr(), std::forward<M>(obj));
     }
 
-    const_iterator begin() const { return const_iterator(dict_base::begin()); }
+    const_iterator begin() const { return const_iterator(dict_base::begin(), dict_base::end()); }
 
-    const_iterator end() const { return const_iterator(dict_base::end()); }
+    const_iterator end() const { return const_iterator(dict_base::end(), dict_base::end()); }
 
     template <class KeyType,
               std::enable_if_t<

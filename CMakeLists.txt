@@ -1,26 +1,20 @@
 
-cmake_minimum_required(VERSION 3.9)
+# Version 3.15 required because of FindPython module.
+cmake_minimum_required(VERSION 3.15)
 
 project(pybind11_generics)
 
-# Check if we are building this project as top level
-set(PYBIND11_GENERICS_MASTER_PROJECT OFF)
-if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(PYBIND11_GENERICS_MASTER_PROJECT ON)
-endif()
-
-option(PYBIND11_GENERICS_TEST "Build pybind11_generics test suite?"
-  ${PYBIND11_GENERICS_MASTER_PROJECT})
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# control compiler warnings
-add_compile_options(-fexceptions)
-add_compile_options(-g)
-add_compile_options(-Wall)
-add_compile_options(-Wno-delete-non-virtual-dtor)
-# add_compile_options(-Wno-logical-op-parentheses)
-# add_compile_options(-Wno-new-returns-null)
+
+# set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# set compile options
+add_compile_options(
+  "-fmax-errors=2" "-Wall" "-pedantic"
+  "$<$<CONFIG:DEBUG>:-fno-omit-frame-pointer>"
+)
+
 # set optimzation level for release
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # generate compilation commands file for emacs
@@ -34,14 +28,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 # add rpaths to the final install executable
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# Must use GNUInstallDirs to install libraries into correct
-# locations on all platforms.
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-
 # Include pybind11
-# enable C++17 support for variant/optional wrapping
-set(PYBIND11_CPP_STANDARD --std=c++1z)
 add_subdirectory(pybind11)
 
 # Define pybind11_generics interface library
@@ -56,6 +43,7 @@ target_include_directories(pybind11_generics
   INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
+<<<<<<< HEAD
 
 if (PYBIND11_GENERICS_TEST)
   add_subdirectory(src)

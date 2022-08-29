@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# BCAD virtualenv activation script.
+# use a default virtualenv location if none are specified,
+# and also will source a ".bashrc_pypath" file to setup PYTHONPATH
+# if it exists.
+
+# set BCAD_PY_ROOT value if not defined
+if [ -z "${BCAD_PY_ROOT}" ]; then
+    export BCAD_PY_ROOT="/tools/bag3/pyusr"
+fi
+
+# check that BCAD_PY_ROOT is a valid Python installation
+PYTHON_BIN="${BCAD_PY_ROOT}/bin/python"
+if ! [ -x "${PYTHON_BIN}" ]; then
+    echo "[ERROR] ${PYTHON_BIN} is not a valid python executable." >&2
+    exit 1
+fi
+
+# update PATH and Python related variables
+export PATH="${BCAD_PY_ROOT}/bin:${PATH}"
+unset PYTHONHOME
+PYPATH_FILE=".bashrc_pypath"
+if [ -f "${PYPATH_FILE}" ]; then
+    source "${PYPATH_FILE}"
+fi
+
+# This should detect bash and zsh, which have a hash command that must
+# be called to get it to forget past commands.  Without forgetting
+# past commands the $PATH changes we made may not be respected
+if [ -n "${BASH:-}" -o -n "${ZSH_VERSION:-}" ] ; then
+    hash -r 2> /dev/null
+fi
