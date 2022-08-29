@@ -60,3 +60,10 @@ target_include_directories(pybind11_generics
 if (PYBIND11_GENERICS_TEST)
   add_subdirectory(src)
 endif()
+
+target_link_libraries(pybind11_generics INTERFACE spdlog)
+
+target_compile_definitions(pybind11_generics 
+INTERFACE
+    SPDLOG_COMPILED_LIB
+    SPDLOG_FMT_EXTERNAL)
